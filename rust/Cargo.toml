@@ -1,0 +1,21 @@
+[package]
+name = "nulls-keymap"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "keymap"
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+
+[dependencies]
+heapless = "0.8.0"
+paste = "0.1"
+include_image = { path = "../include_image" }
+include_image_structs = { path = "../include_image_structs" }
+
+[build-dependencies]
+bindgen = "0.71.1"
+regex = "1.11.1"
+walkdir = "2.5.0"

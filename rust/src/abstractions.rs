@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+use alloc::{borrow::ToOwned, vec::Vec};
 use include_image_structs::QmkImage;
 
 use crate::raw_c::{
@@ -747,12 +747,15 @@ pub fn press_key(keycode: Keycode) {
     }
 }
 
+fn round_up_to_5(n: i32) -> i32 {
+    (n + 4) / 5 * 5
+}
+
 pub struct Screen;
 
 impl Screen {
     pub const SCREEN_WIDTH: u8 = 32;
     pub const SCREEN_HEIGHT: u8 = 128;
-    pub const MAX_LEN: u8 = 32;
     pub const SCREEN_ROWS: u8 = 5; // as in 01234 or 0..5
     pub const SCREEN_COLS: u8 = 16; // as in 0123456789012345 or 0..16
 
@@ -762,10 +765,17 @@ impl Screen {
         }
     }
 
-    pub fn draw_text(s: &str) {
-        let mut b = [0u8; Self::MAX_LEN as usize];
-        let len = s.len().min(Self::MAX_LEN as usize - 1);
-        b[..len].copy_from_slice(&s.as_bytes()[..len]);
+    pub fn draw_text(s: &str, newline: bool) {
+        let mut s = s.to_owned();
+        if newline {
+            let len = s.len() as i32;
+            let pad_num = round_up_to_5(len) - len;
+            for _ in 0..pad_num {
+                s.push(' ');
+            }
+        }
+        let mut b = s.as_bytes().to_vec();
+        b.push(0);
         unsafe {
             oled_write_C(b.as_ptr() as *const i8, false);
         }

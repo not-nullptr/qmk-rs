@@ -8,12 +8,17 @@ use crate::raw_c::qp_sh1106_make_i2c_device;
 use crate::segfault;
 use crate::state::APP_STATE;
 
-fn perform_scroll(up: bool) {
+fn on_scroll(up: bool) {
     let key = if up {
         Keycode::KC_PAGE_UP
     } else {
         Keycode::KC_PAGE_DOWN
     };
+
+    with(|cs| {
+        let mut binding = APP_STATE.borrow(cs).borrow_mut();
+        binding.count += if up { -1 } else { 1 };
+    });
 }
 
 fn on_press(index: u8) {
@@ -25,7 +30,7 @@ fn on_press(index: u8) {
 
 #[no_mangle]
 pub extern "C" fn encoder_update_user_rs(index: u8, clockwise: bool) -> bool {
-    perform_scroll(!clockwise);
+    on_scroll(!clockwise);
     false
 }
 

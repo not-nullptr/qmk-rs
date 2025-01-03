@@ -22,15 +22,8 @@ pub extern "C" fn oled_task_user_rs() -> bool {
 
     with(|cs| {
         let state = APP_STATE.borrow(cs).borrow();
-        // Screen::draw_text("COUNT");
-        // let str = state.count.to_string();
-        // for byte in str.bytes() {
-        //     Screen::draw_text(&format!("0x{:X} ", byte));
-        // }
-
-        for i in 0..=state.count {
-            Screen::draw_text(&format!("{:<width$}", i, width = 5));
-        }
+        Screen::draw_text("COUNT", true);
+        Screen::draw_text(&state.count.to_string(), true);
     });
 
     false

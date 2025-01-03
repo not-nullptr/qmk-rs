@@ -26,7 +26,6 @@ static HEAP: Heap = Heap::empty();
 
 #[panic_handler]
 fn panic_handler(_info: &core::panic::PanicInfo) -> ! {
-    Screen::draw_text("oops!");
     loop {}
 }
 

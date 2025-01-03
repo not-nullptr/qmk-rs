@@ -747,8 +747,12 @@ pub fn press_key(keycode: Keycode) {
     }
 }
 
-fn round_up_to_5(n: i32) -> i32 {
-    (n + 4) / 5 * 5
+fn round_towards_infinity(x: i32, y: i32) -> i32 {
+    if x <= 0 {
+        y
+    } else {
+        (x + y - 1) / y * y
+    }
 }
 
 pub struct Screen;
@@ -765,11 +769,11 @@ impl Screen {
         }
     }
 
-    pub fn draw_text(s: &str, newline: bool) {
+    fn draw_text_internal(s: &str, newline: bool, invert: bool) {
         let mut s = s.to_owned();
         if newline {
             let len = s.len() as i32;
-            let pad_num = round_up_to_5(len) - len;
+            let pad_num = round_towards_infinity(len, Self::SCREEN_ROWS as i32) - len;
             for _ in 0..pad_num {
                 s.push(' ');
             }
@@ -777,8 +781,16 @@ impl Screen {
         let mut b = s.as_bytes().to_vec();
         b.push(0);
         unsafe {
-            oled_write_C(b.as_ptr() as *const i8, false);
+            oled_write_C(b.as_ptr() as *const i8, invert);
         }
+    }
+
+    pub fn draw_text(s: &str, newline: bool) {
+        Self::draw_text_internal(s, newline, false);
+    }
+
+    pub fn draw_text_inverted(s: &str, newline: bool) {
+        Self::draw_text_internal(s, newline, true);
     }
 
     pub fn clear(rerender: bool) {
@@ -788,6 +800,10 @@ impl Screen {
                 oled_render_dirty(true);
             }
         }
+    }
+
+    pub fn newline() {
+        Self::draw_text("", true);
     }
 
     pub fn draw_image<const N: usize>(image: &QmkImage<N>, offset_x: u8, offset_y: u8) {

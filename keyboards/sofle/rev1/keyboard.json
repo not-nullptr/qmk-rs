@@ -1,5 +1,5 @@
 {
-    "manufacturer": "JosefAdamcik",
+    "manufacturer": "nullptr",
     "url": "https://github.com/josefadamcik/SofleKeyboard",
     "maintainer": "Josef Adamcik <josef.adamcik@gmail.com>",
     "development_board": "promicro",
@@ -13,14 +13,14 @@
     },
     "encoder": {
         "rotary": [
-            {"pin_a": "F5", "pin_b": "F4", "resolution": 2}
+            {"pin_a": "F5", "pin_b": "F4", "resolution": 4}
         ]
     },
     "split": {
         "encoder": {
             "right": {
                 "rotary": [
-                    {"pin_a": "F4", "pin_b": "F5", "resolution": 2}
+                    {"pin_a": "F4", "pin_b": "F5", "resolution": 4}
                 ]
             }
         }

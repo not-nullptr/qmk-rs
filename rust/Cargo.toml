@@ -8,12 +8,18 @@ name = "keymap"
 crate-type = ["staticlib"]
 path = "src/lib.rs"
 
+[profile.release]
+panic = "abort"
 
 [dependencies]
-heapless = "0.8.0"
+
 paste = "0.1"
 include_image = { path = "../include_image" }
 include_image_structs = { path = "../include_image_structs" }
+itoa = { version = "1.0.14", features = ["no-panic"] }
+embedded-alloc = "0.6.0"
+rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
+critical-section = "1.2.0"
 
 [build-dependencies]
 bindgen = "0.71.1"

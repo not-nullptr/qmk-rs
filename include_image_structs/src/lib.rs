@@ -4,8 +4,8 @@
 #![allow(warnings)]
 
 #[derive(Debug)]
-pub struct Chunk {
-    pub x: u8,
-    pub y: u8,
-    pub bytes: [u8; 8],
+pub struct QmkImage<const N: usize> {
+    pub width: u8,
+    pub height: u8,
+    pub bytes: [u8; N],
 }

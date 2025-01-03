@@ -1,4 +1,5 @@
-use include_image_structs::Chunk;
+use alloc::vec::Vec;
+use include_image_structs::QmkImage;
 
 use crate::raw_c::{
     oled_clear, oled_render_dirty, oled_set_cursor, oled_write as oled_write_C, oled_write_pixel,
@@ -746,15 +747,15 @@ pub fn press_key(keycode: Keycode) {
     }
 }
 
-// pub fn oled_write(s: &str) {
-//     unsafe {
-//         oled_write_C(s);
-//     }
-// }
-
 pub struct Screen;
 
 impl Screen {
+    pub const SCREEN_WIDTH: u8 = 32;
+    pub const SCREEN_HEIGHT: u8 = 128;
+    pub const MAX_LEN: u8 = 32;
+    pub const SCREEN_ROWS: u8 = 5; // as in 01234 or 0..5
+    pub const SCREEN_COLS: u8 = 16; // as in 0123456789012345 or 0..16
+
     pub fn set_cursor(x: u8, y: u8) {
         unsafe {
             oled_set_cursor(x, y);
@@ -762,8 +763,11 @@ impl Screen {
     }
 
     pub fn draw_text(s: &str) {
+        let mut b = [0u8; Self::MAX_LEN as usize];
+        let len = s.len().min(Self::MAX_LEN as usize - 1);
+        b[..len].copy_from_slice(&s.as_bytes()[..len]);
         unsafe {
-            oled_write_C(s);
+            oled_write_C(b.as_ptr() as *const i8, false);
         }
     }
 
@@ -776,24 +780,25 @@ impl Screen {
         }
     }
 
-    pub fn draw_chunks(image: &[Chunk]) {
-        for chunk in image {
-            Self::draw_chunk(chunk, 0, 0);
+    pub fn draw_image<const N: usize>(image: &QmkImage<N>, offset_x: u8, offset_y: u8) {
+        let columns = u32::div_ceil(image.height as u32, 8);
+        for y_block in 0..columns {
+            let y_offset = y_block * 8;
+            for x in 0..image.width {
+                let byte = image.bytes[x as usize + y_block as usize * image.width as usize];
+                for bit in 0..8 {
+                    let is_on = (byte & (1 << bit)) != 0;
+                    let x = x + offset_x;
+                    let y_offset = y_offset as u8 + offset_y;
+                    Screen::set_pixel(x, (y_offset + bit) as u8, is_on);
+                }
+            }
         }
     }
 
-    pub fn draw_chunk(chunk: &Chunk, x: u8, y: u8) {
-        let start_x = chunk.x * 8;
-        let start_y = chunk.y * 8;
-        let end_x = start_x + 8;
-        let end_y = start_y + 8;
-
-        for x in start_x..end_x {
-            for y in start_y..end_y {
-                unsafe {
-                    oled_write_pixel(x, y, (x + y) % 2 == 0);
-                }
-            }
+    pub fn set_pixel(x: u8, y: u8, is_on: bool) {
+        unsafe {
+            oled_write_pixel(x, y, is_on);
         }
     }
 }

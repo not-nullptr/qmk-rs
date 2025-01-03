@@ -1,14 +1,9 @@
 TARGET=thumbv6m-none-eabi
 
-build: src/*.rs Cargo.toml build.rs
-	cargo rustc --lib --release --target=$(TARGET) \
-		-- \
-		--emit=obj \
-		--codegen opt-level=3 \
-		--codegen panic=abort \
-		-O
-	ln -sf $$(find ./target/$(TARGET)/release/deps/keymap-*.o -printf '%T+ %p\n' | sort -r | head -n 1 | awk '{print $$2}') \
-		rust_keymap.o
+build: src/*.rs Cargo.toml
+	cargo build --release --target $(TARGET)
+	ln -sf ./target/$(TARGET)/release/libkeymap.a \
+		rust_keymap.a
 macro-expand:
 	rustc -Z unstable-options --pretty expanded src/keymap.rs
 rustc-build:
@@ -18,9 +13,9 @@ rustc-build:
 		--codegen panic=abort \
 		src/keymap.rs
 dump-keymap-data:
-	arm-none-eabi-objdump -s -j .rodata.keymaps  rust_keymap.o
+	arm-none-eabi-objdump -s -j .rodata.keymaps  rust_keymap.a
 deps:
 	rustup target add $(TARGET)
 clean:
 	cargo clean
-	-rm -f rust_keymap.o
+	-rm -f rust_keymap.a

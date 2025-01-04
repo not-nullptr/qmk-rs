@@ -1,7 +1,6 @@
 #![no_std]
 #![no_builtins]
 #![crate_type = "staticlib"]
-#![allow(warnings)]
 
 extern crate alloc;
 extern crate core;
@@ -12,7 +11,8 @@ mod debug;
 mod heap;
 mod hid;
 mod image;
-mod key;
+mod keyboard;
+mod keymap;
 mod macros;
 mod raw_c;
 mod rotary_encoder;

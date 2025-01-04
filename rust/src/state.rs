@@ -3,7 +3,7 @@ use core::cell::RefCell;
 use critical_section::Mutex;
 use enum_iterator::Sequence;
 
-use crate::key::Keyboard;
+use crate::keyboard::Keyboard;
 
 #[derive(Clone, Copy, Sequence)]
 pub enum AppPage {

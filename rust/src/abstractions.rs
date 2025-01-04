@@ -1,12 +1,22 @@
-use alloc::{borrow::ToOwned, fmt, vec::Vec};
+use alloc::{borrow::ToOwned, fmt, format, string::ToString, vec::Vec};
+use critical_section::with;
+use enum_iterator::{first, next};
 use include_image_structs::QmkImage;
 
-use crate::raw_c::{
-    oled_clear, oled_render_dirty, oled_set_cursor, oled_write as oled_write_C, oled_write_pixel,
-    oled_write_raw, tap_code16,
+use crate::{
+    animate::animate_frames,
+    heap::{HEAP, HEAP_SIZE},
+    image::CREDITS,
+    keyboard::Keyboard,
+    raw_c::{
+        oled_clear, oled_render_dirty, oled_set_cursor, oled_write as oled_write_C,
+        oled_write_pixel, oled_write_raw, tap_code16,
+    },
+    state::{AppPage, APP_STATE},
 };
 
 #[derive(Clone, Copy, Debug)]
+#[repr(u16)]
 pub enum Keycode {
     KC_NO = 0,
     KC_TRANSPARENT = 1,
@@ -833,5 +843,92 @@ impl Screen {
         unsafe {
             oled_write_pixel(x, y, is_on);
         }
+    }
+
+    pub fn render() {
+        with(|cs| {
+            let mut state = APP_STATE.borrow(cs).borrow_mut();
+            let keys = state.keyboard.read_keys();
+            state.animation_counter += 1;
+            if let Some(title) = state.page.get_title() {
+                Screen::draw_text(title, true);
+                Screen::newline();
+            }
+            match state.page {
+                AppPage::Stats => {
+                    let wpm = Keyboard::get_wpm();
+                    Screen::draw_text("WPM:", true);
+                    Screen::draw_text(&wpm.to_string(), true);
+                }
+
+                AppPage::Heap => {
+                    let used = HEAP.used();
+                    let free = HEAP.free();
+                    let used = if used == 0 { 0 } else { used.div_ceil(1000) };
+                    let free = if free == 0 { 0 } else { free.div_ceil(1000) };
+                    let critical = used >= HEAP_SIZE / 2;
+                    let used = format!("{}kb", used);
+                    let free = format!("{}kb", free);
+                    Screen::draw_text("Used:", true);
+                    if critical {
+                        Screen::draw_text_inverted(&used, true);
+                    } else {
+                        Screen::draw_text(&used, true);
+                    }
+                    Screen::newline();
+                    Screen::draw_text("Free:", true);
+                    if critical {
+                        Screen::draw_text_inverted(&free, true);
+                    } else {
+                        Screen::draw_text(&free, true);
+                    }
+                }
+
+                AppPage::KeyD => {
+                    Screen::draw_text("CPU", true);
+                    Screen::draw_text(&format!("{}%", state.cpu_usage), true);
+                    Screen::newline();
+                    Screen::draw_text("RAM", true);
+                    Screen::draw_text(&format!("{}%", state.mem_usage), true);
+                    Screen::newline();
+                    Screen::draw_text("Procs", true);
+                    Screen::draw_text(&state.process_count.to_string(), true);
+                }
+
+                AppPage::Debug => {
+                    Screen::draw_text("Count", true);
+                    Screen::draw_text(&state.debug_count.to_string(), true);
+                }
+
+                AppPage::Credits => {
+                    Screen::draw_text("wrote", true);
+                    Screen::draw_text("by", true);
+                    Screen::draw_text("null-", true);
+                    Screen::draw_text("ptr", true);
+                    Screen::draw_text("in rs", true);
+                    Screen::newline();
+                    Screen::draw_text("sofle", true);
+                    Screen::draw_text("ftw!!", true);
+                    let y = Screen::SCREEN_HEIGHT - CREDITS[0].height - 8;
+                    Screen::draw_image(&animate_frames(6, &CREDITS, state.animation_counter), 0, y);
+                }
+            }
+        });
+    }
+
+    pub fn change_page() {
+        with(|cs| {
+            let mut state = APP_STATE.borrow(cs).borrow_mut();
+            let Some(next) = next(&state.page) else {
+                let Some(first) = first::<AppPage>() else {
+                    return;
+                };
+                state.page = first;
+                Screen::clear(false);
+                return;
+            };
+            state.page = next;
+            Screen::clear(false);
+        });
     }
 }

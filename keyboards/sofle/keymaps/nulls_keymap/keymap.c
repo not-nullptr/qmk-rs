@@ -157,10 +157,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 void init_allocator_rs(void);
 bool encoder_update_user_rs(uint8_t index, bool clockwise);
 bool oled_task_user_rs(void);
-void encoder_press_user_rs(uint8_t index);
-void key_press_user_rs(uint16_t keycode);
-void key_release_user_rs(uint16_t keycode);
 void raw_hid_receive_rs(uint8_t *data, uint8_t length);
+bool process_record_user_rs(uint16_t keycode, keyrecord_t *record);
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     raw_hid_receive_rs(data, length);
@@ -170,40 +168,17 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     return encoder_update_user_rs(index, clockwise);
 }
 
-// bool oled_task_user(void) {
-//     return oled_task_user_rs();
-// }
-
 bool oled_task_user(void) {
-    // Host Keyboard Layer Status
-    oled_write_P(PSTR("Layer: "), false);
-
-    switch (get_highest_layer(layer_state)) {
-        case _QWERTY:
-            oled_write_P(PSTR("Default\n"), false);
-            break;
-        case _LOWER:
-            oled_write_P(PSTR("LOWER\n"), false);
-            break;
-        default:
-            // Or use the write_ln shortcut over adding '\n' to the end of your string
-            oled_write_ln_P(PSTR("Undefined"), false);
-    }
-
-    // Host Keyboard LED Status
-    led_t led_state = host_keyboard_led_state();
-    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
-    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
-    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
-
-    return false;
+    return oled_task_user_rs();
 }
+
 
 void keyboard_pre_init_user(void) {
     init_allocator_rs();
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    return process_record_user_rs(keycode, record);
         switch (keycode) {
         case KC_PRVWD:
             if (record->event.pressed) {
@@ -280,23 +255,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
 
-        case KC_F20:
-            if (record->event.pressed) {
-                encoder_press_user_rs(0);
-            }
-            break;
+        // case KC_F20:
+        //     if (record->event.pressed) {
+        //         encoder_press_user_rs(0);
+        //     }
+        //     break;
 
-        case KC_F21:
-            if (record->event.pressed) {
-                encoder_press_user_rs(1);
-            }
-            break;
-    }
-
-    if (record->event.pressed) {
-        key_press_user_rs(keycode);
-    } else {
-        key_release_user_rs(keycode);
+        // case KC_F21:
+        //     if (record->event.pressed) {
+        //         encoder_press_user_rs(1);
+        //     }
+        //     break;
     }
 
     return true;

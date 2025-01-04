@@ -1,7 +1,12 @@
 use alloc::vec::Vec;
 use critical_section::with;
+use enum_iterator::{first, next};
 
-use crate::{abstractions::Keycode, raw_c::get_current_wpm, state::APP_STATE};
+use crate::{
+    abstractions::{Keycode, Screen},
+    raw_c::get_current_wpm,
+    state::{AppPage, APP_STATE},
+};
 
 pub struct Keyboard {
     key_buffer: Vec<Keycode>,
@@ -14,7 +19,13 @@ impl Keyboard {
         }
     }
     pub fn key_press(&mut self, keycode: Keycode) {
-        self.key_buffer.insert(0, keycode);
+        self.write_key(keycode);
+        match keycode {
+            Keycode::KC_F20 | Keycode::KC_F21 => {
+                Screen::change_page();
+            }
+            _ => {}
+        }
     }
     pub fn key_release(&mut self, keycode: Keycode) {}
     pub fn get_wpm() -> u8 {
@@ -26,20 +37,8 @@ impl Keyboard {
         self.key_buffer.clear();
         buf
     }
-}
 
-#[no_mangle]
-pub extern "C" fn key_press_user_rs(keycode: Keycode) {
-    with(|cs| {
-        let mut state = APP_STATE.borrow(cs).borrow_mut();
-        state.keyboard.key_press(keycode);
-    });
-}
-
-#[no_mangle]
-pub extern "C" fn key_release_user_rs(keycode: Keycode) {
-    with(|cs| {
-        let mut state = APP_STATE.borrow(cs).borrow_mut();
-        state.keyboard.key_release(keycode);
-    });
+    fn write_key(&mut self, key: Keycode) {
+        self.key_buffer.insert(0, key);
+    }
 }

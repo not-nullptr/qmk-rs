@@ -18,36 +18,10 @@ fn on_scroll(up: bool) {
     } else {
         Keycode::KC_PAGE_DOWN
     };
-
-    // with(|cs| {
-    //     let mut binding = APP_STATE.borrow(cs).borrow_mut();
-    //     binding.count += if up { -1 } else { 1 };
-    // });
-}
-
-fn on_press(index: u8) {
-    with(|cs| {
-        let mut state = APP_STATE.borrow(cs).borrow_mut();
-        let Some(next) = next(&state.page) else {
-            let Some(first) = first::<AppPage>() else {
-                return;
-            };
-            state.page = first;
-            Screen::clear(false);
-            return;
-        };
-        state.page = next;
-        Screen::clear(false);
-    });
 }
 
 #[no_mangle]
 pub extern "C" fn encoder_update_user_rs(index: u8, clockwise: bool) -> bool {
     on_scroll(!clockwise);
     false
-}
-
-#[no_mangle]
-pub extern "C" fn encoder_press_user_rs(index: u8) {
-    on_press(index);
 }

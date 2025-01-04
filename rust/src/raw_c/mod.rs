@@ -18,3 +18,47 @@ extern "C" {
     pub fn timer_elapsed(timer: u16) -> u16;
     pub static mut layer_state: u16;
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct Tap {
+    pub interrupted: bool,
+    pub reserved_2: bool,
+    pub reserved_1: bool,
+    pub reserved_0: bool,
+    pub count: u8,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum KeyEventType {
+    TICK_EVENT = 0,
+    KEY_EVENT = 1,
+    ENCODER_CW_EVENT = 2,
+    ENCODER_CCW_EVENT = 3,
+    COMBO_EVENT = 4,
+    DIP_SWITCH_ON_EVENT = 5,
+    DIP_SWITCH_OFF_EVENT = 6,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct KeyPos {
+    pub col: u8,
+    pub row: u8,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct KeyEvent {
+    pub key: KeyPos,
+    pub time: u16,
+    pub event_type: KeyEventType,
+    pub pressed: bool,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct KeyRecord {
+    pub event: KeyEvent,
+    pub tap: Tap,
+}

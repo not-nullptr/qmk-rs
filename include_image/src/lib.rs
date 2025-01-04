@@ -1,7 +1,6 @@
 use std::fs;
 
 use image::{ImageBuffer, Luma};
-use include_image_structs::QmkImage;
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use regex::Regex;
@@ -111,13 +110,11 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
 
     files.sort_by(|a, b| a.0.cmp(&b.0));
 
-    let first = files.first().expect("no files in directory");
-
     let mut images_tokens = vec![];
 
     let mut all_lens = 0;
 
-    for (index, (name, content)) in files.into_iter().enumerate() {
+    for (_, (name, _)) in files.into_iter().enumerate() {
         let (bytes, _name, width, height) = path_to_image(&format!("{}/{}", input_path, name));
 
         if all_lens == 0 {

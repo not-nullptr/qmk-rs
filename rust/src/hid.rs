@@ -15,8 +15,10 @@ pub extern "C" fn raw_hid_receive_rs(data: &mut [u8], length: u8) {
 
         let cpu_usage = payload[0];
         let mem_usage = payload[1];
+        let process_count = u16::from_be_bytes([payload[2], payload[3]]);
 
         state.cpu_usage = cpu_usage;
         state.mem_usage = mem_usage;
+        state.process_count = process_count;
     });
 }

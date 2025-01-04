@@ -16,4 +16,5 @@ extern "C" {
     pub fn putchar_(character: core::ffi::c_char);
     pub fn timer_read() -> u16;
     pub fn timer_elapsed(timer: u16) -> u16;
+    pub static mut layer_state: u16;
 }

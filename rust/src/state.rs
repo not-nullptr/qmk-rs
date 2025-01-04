@@ -15,13 +15,13 @@ pub enum AppPage {
 }
 
 impl AppPage {
-    pub fn get_title(&self) -> &str {
+    pub fn get_title(&self) -> Option<&str> {
         match self {
-            AppPage::Stats => "STATS",
-            AppPage::Debug => "DEBUG",
-            AppPage::Heap => "HEAP",
-            AppPage::KeyD => "KEYD",
-            AppPage::Credits => "CREDS",
+            AppPage::Stats => Some("STATS"),
+            AppPage::Debug => Some("DEBUG"),
+            AppPage::Heap => Some("HEAP"),
+            AppPage::KeyD => Some("KEYD"),
+            AppPage::Credits => Some("CREDS"),
         }
     }
 }
@@ -42,6 +42,7 @@ pub struct AppState {
     pub debug_count: i32,
     pub cpu_usage: u8,
     pub mem_usage: u8,
+    pub process_count: u16,
     pub animation_counter: u32,
     pub keyboard: Keyboard,
     pub game_state: GameState,
@@ -54,6 +55,7 @@ impl AppState {
             debug_count: 0,
             cpu_usage: 0,
             mem_usage: 0,
+            process_count: 0,
             animation_counter: 0,
             keyboard: Keyboard::new(),
             game_state: GameState::new(),

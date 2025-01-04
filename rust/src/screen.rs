@@ -5,7 +5,7 @@ use crate::{
     abstractions::{Keycode, Screen},
     animate::animate_frames,
     heap::{HEAP, HEAP_SIZE},
-    image::{CREDITS, HAWK_TUAH},
+    image::CREDITS,
     key::Keyboard,
     raw_c::{get_u8_str, oled_write},
     state::{AppPage, APP_STATE},
@@ -25,19 +25,15 @@ pub extern "C" fn oled_task_user_rs() -> bool {
         let mut state = APP_STATE.borrow(cs).borrow_mut();
         let keys = state.keyboard.read_keys();
         state.animation_counter += 1;
-        Screen::draw_text(state.page.get_title(), true);
-        Screen::newline();
+        if let Some(title) = state.page.get_title() {
+            Screen::draw_text(title, true);
+            Screen::newline();
+        }
         match state.page {
             AppPage::Stats => {
                 let wpm = Keyboard::get_wpm();
                 Screen::draw_text("WPM:", true);
                 Screen::draw_text(&wpm.to_string(), true);
-                let y = Screen::SCREEN_HEIGHT - HAWK_TUAH[0].height;
-                Screen::draw_image(
-                    &animate_frames(2, &HAWK_TUAH, state.animation_counter),
-                    0,
-                    y,
-                );
             }
 
             AppPage::Heap => {
@@ -69,6 +65,9 @@ pub extern "C" fn oled_task_user_rs() -> bool {
                 Screen::newline();
                 Screen::draw_text("RAM", true);
                 Screen::draw_text(&format!("{}%", state.mem_usage), true);
+                Screen::newline();
+                Screen::draw_text("Procs", true);
+                Screen::draw_text(&format!("{}", state.process_count), true);
             }
 
             AppPage::Debug => {}

@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use alloc::{borrow::ToOwned, fmt, format, string::ToString, vec::Vec};
 use critical_section::with;
 use enum_iterator::{first, next};

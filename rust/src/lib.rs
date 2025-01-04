@@ -19,8 +19,6 @@ mod rotary_encoder;
 mod screen;
 mod state;
 
-use abstractions::Screen;
-
 #[panic_handler]
 fn panic_handler(_info: &core::panic::PanicInfo) -> ! {
     loop {}

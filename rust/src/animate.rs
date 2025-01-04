@@ -1,7 +1,4 @@
-use critical_section::with;
 use include_image_structs::QmkImage;
-
-use crate::state::APP_STATE;
 
 pub fn animate_frames<const N: usize>(
     slowness: u32,

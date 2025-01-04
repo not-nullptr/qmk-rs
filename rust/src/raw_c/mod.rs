@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use crate::abstractions::Keycode;
 
 pub struct PainterDevice;

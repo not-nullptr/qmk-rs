@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use core::cell::RefCell;
 use critical_section::Mutex;
 use enum_iterator::Sequence;

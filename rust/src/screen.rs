@@ -1,15 +1,4 @@
-use alloc::{borrow::ToOwned, format, string::ToString};
-use critical_section::with;
-
-use crate::{
-    abstractions::{Keycode, Screen},
-    animate::animate_frames,
-    heap::{HEAP, HEAP_SIZE},
-    image::CREDITS,
-    keyboard::Keyboard,
-    raw_c::{get_u8_str, oled_write},
-    state::{AppPage, APP_STATE},
-};
+use crate::abstractions::Screen;
 
 fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t

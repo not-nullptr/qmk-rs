@@ -1,11 +1,8 @@
 use alloc::vec::Vec;
-use critical_section::with;
-use enum_iterator::{first, next};
 
 use crate::{
     abstractions::{Keycode, Screen},
     raw_c::get_current_wpm,
-    state::{AppPage, APP_STATE},
 };
 
 pub struct Keyboard {
@@ -27,7 +24,7 @@ impl Keyboard {
             _ => {}
         }
     }
-    pub fn key_release(&mut self, keycode: Keycode) {}
+    pub fn key_release(&mut self, _keycode: Keycode) {}
     pub fn get_wpm() -> u8 {
         unsafe { get_current_wpm() }
     }

@@ -1,13 +1,4 @@
-use critical_section::with;
 use embedded_alloc::LlffHeap as Heap;
-use rp2040_hal::{
-    clocks::{init_clocks_and_plls, Clock},
-    pac,
-    timer::{Alarm0, Timer},
-    watchdog::Watchdog,
-};
-
-use crate::{raw_c::timer_read, state::APP_STATE};
 
 pub const HEAP_SIZE: usize = 64000; // 25% of memory or so
 

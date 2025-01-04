@@ -1,4 +1,5 @@
 use embedded_alloc::LlffHeap as Heap;
+use rp2040_hal as _;
 
 pub const HEAP_SIZE: usize = 64000; // 25% of memory or so
 

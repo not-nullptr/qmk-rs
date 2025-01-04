@@ -163,9 +163,7 @@ void key_release_user_rs(uint16_t keycode);
 void raw_hid_receive_rs(uint8_t *data, uint8_t length);
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
-    uint8_t response[length];
-    memset(response, 0, length);
-    raw_hid_receive_rs(response, length);
+    raw_hid_receive_rs(data, length);
 }
 
 bool encoder_update_user(uint8_t index, bool clockwise) {

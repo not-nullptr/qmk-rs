@@ -1,25 +1,43 @@
-use alloc::{format, string::ToString};
+use alloc::{borrow::ToOwned, format, string::ToString};
 use critical_section::with;
 
 use crate::{
-    abstractions::Screen,
+    abstractions::{Keycode, Screen},
+    animate::animate_frames,
     heap::{HEAP, HEAP_SIZE},
-    image::RUST_LOGO,
+    image::{CREDITS, HAWK_TUAH},
     key::Keyboard,
     raw_c::{get_u8_str, oled_write},
     state::{AppPage, APP_STATE},
 };
 
+fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    a + (b - a) * t
+}
+
+fn remap(value: f64, old_min: f64, old_max: f64, new_min: f64, new_max: f64) -> f64 {
+    new_min + (value - old_min) * (new_max - new_min) / (old_max - old_min)
+}
+
 #[no_mangle]
 pub extern "C" fn oled_task_user_rs() -> bool {
     with(|cs| {
-        let state = APP_STATE.borrow(cs).borrow();
+        let mut state = APP_STATE.borrow(cs).borrow_mut();
+        let keys = state.keyboard.read_keys();
+        state.animation_counter += 1;
+        Screen::draw_text(state.page.get_title(), true);
+        Screen::newline();
         match state.page {
             AppPage::Stats => {
-                Screen::draw_text("STATS", true);
-                Screen::newline();
+                let wpm = Keyboard::get_wpm();
                 Screen::draw_text("WPM:", true);
-                Screen::draw_text(&Keyboard::get_wpm().to_string(), true);
+                Screen::draw_text(&wpm.to_string(), true);
+                let y = Screen::SCREEN_HEIGHT - HAWK_TUAH[0].height;
+                Screen::draw_image(
+                    &animate_frames(2, &HAWK_TUAH, state.animation_counter),
+                    0,
+                    y,
+                );
             }
 
             AppPage::Heap => {
@@ -30,8 +48,6 @@ pub extern "C" fn oled_task_user_rs() -> bool {
                 let critical = used >= HEAP_SIZE / 2;
                 let used = format!("{}kb", used);
                 let free = format!("{}kb", free);
-                Screen::draw_text("HEAP", true);
-                Screen::newline();
                 Screen::draw_text("Used:", true);
                 if critical {
                     Screen::draw_text_inverted(&used, true);
@@ -48,8 +64,6 @@ pub extern "C" fn oled_task_user_rs() -> bool {
             }
 
             AppPage::KeyD => {
-                Screen::draw_text("KEYD", true);
-                Screen::newline();
                 Screen::draw_text("CPU", true);
                 Screen::draw_text(&format!("{}%", state.cpu_usage), true);
                 Screen::newline();
@@ -57,11 +71,19 @@ pub extern "C" fn oled_task_user_rs() -> bool {
                 Screen::draw_text(&format!("{}%", state.mem_usage), true);
             }
 
-            AppPage::Debug => {
-                Screen::draw_text("DEBUG", true);
+            AppPage::Debug => {}
+
+            AppPage::Credits => {
+                Screen::draw_text("wrote", true);
+                Screen::draw_text("by", true);
+                Screen::draw_text("null-", true);
+                Screen::draw_text("ptr", true);
+                Screen::draw_text("in rs", true);
                 Screen::newline();
-                Screen::draw_text("Count", true);
-                Screen::draw_text(&state.debug_count.to_string(), true);
+                Screen::draw_text("sofle", true);
+                Screen::draw_text("ftw!!", true);
+                let y = Screen::SCREEN_HEIGHT - CREDITS[0].height - 8;
+                Screen::draw_image(&animate_frames(6, &CREDITS, state.animation_counter), 0, y);
             }
         }
     });

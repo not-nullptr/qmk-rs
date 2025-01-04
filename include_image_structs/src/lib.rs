@@ -3,7 +3,7 @@
 #![crate_type = "staticlib"]
 #![allow(warnings)]
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct QmkImage<const N: usize> {
     pub width: u8,
     pub height: u8,

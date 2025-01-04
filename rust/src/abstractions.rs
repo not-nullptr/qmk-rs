@@ -1,4 +1,4 @@
-use alloc::{borrow::ToOwned, vec::Vec};
+use alloc::{borrow::ToOwned, fmt, vec::Vec};
 use include_image_structs::QmkImage;
 
 use crate::raw_c::{
@@ -6,6 +6,7 @@ use crate::raw_c::{
     oled_write_raw, tap_code16,
 };
 
+#[derive(Clone, Copy, Debug)]
 pub enum Keycode {
     KC_NO = 0,
     KC_TRANSPARENT = 1,
@@ -739,6 +740,12 @@ pub enum Keycode {
     QK_USER_29 = 32349,
     QK_USER_30 = 32350,
     QK_USER_31 = 32351,
+}
+
+impl fmt::Display for Keycode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 pub fn press_key(keycode: Keycode) {

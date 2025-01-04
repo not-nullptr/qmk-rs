@@ -1,7 +1,8 @@
-use include_image::include_image;
+use include_image::include_animation;
+use include_image_structs::QmkImage;
 
-include_image!("rust_logo.png");
+include_animation!("rust_logo");
 
 fn main() {
-    println!("{:?}", RUST_LOGO.bytes.len());
+    println!("{:?}", RUST_LOGO);
 }

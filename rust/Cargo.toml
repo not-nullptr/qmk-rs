@@ -13,14 +13,13 @@ panic = "abort"
 
 [dependencies]
 
-paste = "0.1"
 include_image = { path = "../include_image" }
 include_image_structs = { path = "../include_image_structs" }
-itoa = { version = "1.0.14", features = ["no-panic"] }
 embedded-alloc = "0.6.0"
 rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
 critical-section = "1.2.0"
 enum-iterator = "2.1.0"
+cortex-m = "0.7.7"
 
 [build-dependencies]
 bindgen = "0.71.1"

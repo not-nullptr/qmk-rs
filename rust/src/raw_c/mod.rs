@@ -13,4 +13,7 @@ extern "C" {
     pub fn qp_sh1106_make_i2c_device(width: u16, height: u16, i2c_address: u8) -> PainterDevice;
     pub fn get_current_wpm() -> u8;
     pub fn get_u8_str(curr_num: u8, curr_pad: core::ffi::c_char) -> *const core::ffi::c_char;
+    pub fn putchar_(character: core::ffi::c_char);
+    pub fn timer_read() -> u16;
+    pub fn timer_elapsed(timer: u16) -> u16;
 }

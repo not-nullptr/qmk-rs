@@ -7,6 +7,8 @@ extern crate alloc;
 extern crate core;
 
 mod abstractions;
+mod animate;
+mod debug;
 mod heap;
 mod hid;
 mod image;

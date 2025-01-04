@@ -1,3 +1,4 @@
-use include_image::include_image;
+use include_image::{include_animation, include_image};
 
-include_image!("rust_logo.png");
+include_animation!("credits");
+include_animation!("hawk_tuah");

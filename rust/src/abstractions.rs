@@ -1,6 +1,14 @@
 #![allow(warnings)]
 
-use alloc::{borrow::ToOwned, fmt, format, string::ToString, vec::Vec};
+use core::any::{type_name, type_name_of_val, Any, TypeId};
+
+use alloc::{
+    borrow::ToOwned,
+    boxed::Box,
+    fmt, format,
+    string::{String, ToString},
+    vec::Vec,
+};
 use critical_section::with;
 use enum_iterator::{first, next};
 use include_image_structs::QmkImage;
@@ -10,11 +18,16 @@ use crate::{
     heap::{HEAP, HEAP_SIZE},
     image::CREDITS,
     keyboard::Keyboard,
+    minigames::{
+        flappy_bird::FlappyBird,
+        game::{Game, GameContext},
+        tetris::Tetris,
+    },
     raw_c::{
         oled_clear, oled_render_dirty, oled_set_cursor, oled_write as oled_write_C,
         oled_write_pixel, oled_write_raw, tap_code16,
     },
-    state::{AppPage, APP_STATE},
+    state::{AppPage, AppState, APP_STATE},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -850,12 +863,47 @@ impl Screen {
     pub fn render() {
         with(|cs| {
             let mut state = APP_STATE.borrow(cs).borrow_mut();
-            let keys = state.keyboard.read_keys();
+            let keys = state.read_keys();
             state.animation_counter += 1;
+            let animation_counter = state.animation_counter;
             if let Some(title) = state.page.get_title() {
                 Screen::draw_text(title, true);
                 Screen::newline();
             }
+
+            // let load_game = |game: impl Game, state: &mut AppState| state.game;
+
+            fn run_game<T>(state: &mut AppState, keys: &Vec<Keycode>)
+            where
+                T: Game + 'static,
+            {
+                let mut should_load = false;
+
+                if let Some(game) = &mut state.game {
+                    should_load = T::id() != game.idv();
+                } else {
+                    should_load = true;
+                }
+
+                if should_load {
+                    state.game = Some(Box::new(T::create()));
+                }
+
+                let game = state.game.as_mut().unwrap();
+
+                if state.animation_counter % game.logic_delay() as u32 == 0 {
+                    game.logic_tick(&mut GameContext {
+                        tick_num: state.animation_counter,
+                        key_buffer: keys,
+                    });
+                }
+
+                game.render_tick(&mut GameContext {
+                    tick_num: state.animation_counter,
+                    key_buffer: keys,
+                });
+            }
+
             match state.page {
                 AppPage::Stats => {
                     let wpm = Keyboard::get_wpm();
@@ -898,8 +946,15 @@ impl Screen {
                 }
 
                 AppPage::Debug => {
-                    Screen::draw_text("Count", true);
-                    Screen::draw_text(&state.debug_count.to_string(), true);
+                    Screen::draw_text(&state.debug_str, true);
+                }
+
+                AppPage::Tetris => {
+                    run_game::<Tetris>(&mut state, &keys);
+                }
+
+                AppPage::FlappyBird => {
+                    run_game::<FlappyBird>(&mut state, &keys);
                 }
 
                 AppPage::Credits => {
@@ -918,19 +973,16 @@ impl Screen {
         });
     }
 
-    pub fn change_page() {
-        with(|cs| {
-            let mut state = APP_STATE.borrow(cs).borrow_mut();
-            let Some(next) = next(&state.page) else {
-                let Some(first) = first::<AppPage>() else {
-                    return;
-                };
-                state.page = first;
-                Screen::clear(false);
+    pub fn change_page(state: &mut AppState) {
+        let Some(next) = next(&state.page) else {
+            let Some(first) = first::<AppPage>() else {
                 return;
             };
-            state.page = next;
+            state.page = first;
             Screen::clear(false);
-        });
+            return;
+        };
+        state.page = next;
+        Screen::clear(false);
     }
 }

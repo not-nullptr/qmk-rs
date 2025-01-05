@@ -1,14 +1,17 @@
+use alloc::{boxed::Box, string::String, vec::Vec};
 use core::cell::RefCell;
 use critical_section::Mutex;
 use enum_iterator::Sequence;
 
-use crate::keyboard::Keyboard;
+use crate::{abstractions::Keycode, minigames::game::Game};
 
 #[derive(Clone, Copy, Sequence)]
 pub enum AppPage {
     Stats,
     Heap,
     KeyD,
+    Tetris,
+    FlappyBird,
     Debug,
     Credits,
 }
@@ -21,6 +24,8 @@ impl AppPage {
             AppPage::Heap => Some("HEAP"),
             AppPage::KeyD => Some("KEYD"),
             AppPage::Credits => Some("CREDS"),
+            AppPage::Tetris => None,
+            AppPage::FlappyBird => None,
         }
     }
 }
@@ -43,8 +48,9 @@ pub struct AppState {
     pub mem_usage: u8,
     pub process_count: u16,
     pub animation_counter: u32,
-    pub keyboard: Keyboard,
-    pub game_state: GameState,
+    key_buffer: Vec<Keycode>,
+    pub game: Option<Box<dyn Game>>,
+    pub debug_str: String,
 }
 
 impl AppState {
@@ -56,9 +62,20 @@ impl AppState {
             mem_usage: 0,
             process_count: 0,
             animation_counter: 0,
-            keyboard: Keyboard::new(),
-            game_state: GameState::new(),
+            key_buffer: Vec::new(),
+            game: None,
+            debug_str: String::new(),
         }
+    }
+
+    pub fn write_key(&mut self, keycode: Keycode) {
+        self.key_buffer.push(keycode);
+    }
+
+    pub fn read_keys(&mut self) -> Vec<Keycode> {
+        let clone = self.key_buffer.clone();
+        self.key_buffer.clear();
+        clone
     }
 }
 

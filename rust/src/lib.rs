@@ -14,6 +14,8 @@ mod image;
 mod keyboard;
 mod keymap;
 mod macros;
+mod minigames;
+mod random;
 mod raw_c;
 mod rotary_encoder;
 mod screen;

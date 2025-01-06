@@ -4,7 +4,7 @@ use image::{ImageBuffer, Luma};
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use regex::Regex;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, LitInt};
 
 fn remove_non_alphanumeric(input: &str) -> String {
     let re = Regex::new(r"[^a-zA-Z0-9_]+").unwrap();

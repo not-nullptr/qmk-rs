@@ -12,6 +12,7 @@ pub enum AppPage {
     KeyD,
     Tetris,
     FlappyBird,
+    Raycast,
     Debug,
     Credits,
 }
@@ -26,6 +27,7 @@ impl AppPage {
             AppPage::Credits => Some("CREDS"),
             AppPage::Tetris => None,
             AppPage::FlappyBird => None,
+            AppPage::Raycast => None,
         }
     }
 }

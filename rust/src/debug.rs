@@ -6,12 +6,12 @@ impl Debug {
     pub fn write(text: &str) {
         for byte in text.bytes() {
             unsafe {
-                putchar_(byte as i8);
+                putchar_(byte);
             }
         }
 
         unsafe {
-            putchar_(b'\n' as i8);
+            putchar_(b'\n');
         }
     }
 }

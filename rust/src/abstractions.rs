@@ -21,6 +21,7 @@ use crate::{
     minigames::{
         flappy_bird::FlappyBird,
         game::{Game, GameContext},
+        raycast::RaycasterGame,
         tetris::Tetris,
     },
     raw_c::{
@@ -813,7 +814,7 @@ impl Screen {
         let mut b = s.as_bytes().to_vec();
         b.push(0);
         unsafe {
-            oled_write_C(b.as_ptr() as *const i8, invert);
+            oled_write_C(b.as_ptr(), invert);
         }
     }
 
@@ -873,7 +874,7 @@ impl Screen {
 
             // let load_game = |game: impl Game, state: &mut AppState| state.game;
 
-            fn run_game<T>(state: &mut AppState, keys: &Vec<Keycode>)
+            fn run_minigame<T>(state: &mut AppState, keys: &Vec<Keycode>)
             where
                 T: Game + 'static,
             {
@@ -950,11 +951,15 @@ impl Screen {
                 }
 
                 AppPage::Tetris => {
-                    run_game::<Tetris>(&mut state, &keys);
+                    run_minigame::<Tetris>(&mut state, &keys);
                 }
 
                 AppPage::FlappyBird => {
-                    run_game::<FlappyBird>(&mut state, &keys);
+                    run_minigame::<FlappyBird>(&mut state, &keys);
+                }
+
+                AppPage::Raycast => {
+                    run_minigame::<RaycasterGame>(&mut state, &keys);
                 }
 
                 AppPage::Credits => {
@@ -984,5 +989,43 @@ impl Screen {
         };
         state.page = next;
         Screen::clear(false);
+    }
+
+    pub fn draw_line(x0: u8, y0: u8, x1: u8, y1: u8) {
+        let x0 = x0 as i32;
+        let x1 = x1 as i32;
+        let y0 = y0 as i32;
+        let y1 = y1 as i32;
+
+        let dx = (x1 - x0).abs();
+        let dy = (y1 - y0).abs();
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx - dy;
+
+        let mut x = x0;
+        let mut y = y0;
+
+        let mut iterations = 0;
+
+        loop {
+            Screen::set_pixel(x.max(0).min(255) as u8, y.max(0).min(255) as u8, true);
+
+            if x == x1 && y == y1 || iterations >= 128 {
+                break;
+            }
+
+            let e2 = err * 2;
+            if e2 > -dy {
+                err -= dy;
+                x += sx;
+            }
+            if e2 < dx {
+                err += dx;
+                y += sy;
+            }
+
+            iterations += 1;
+        }
     }
 }

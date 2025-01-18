@@ -9,7 +9,7 @@ fn remap(value: f64, old_min: f64, old_max: f64, new_min: f64, new_max: f64) -> 
 }
 
 #[no_mangle]
-pub extern "C" fn oled_task_user_rs() -> bool {
+pub extern "C" fn oled_task_user() -> bool {
     Screen::render();
     false
 }

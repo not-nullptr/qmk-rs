@@ -154,119 +154,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 // rust related stuff
 
-void init_allocator_rs(void);
-bool encoder_update_user_rs(uint8_t index, bool clockwise);
-bool oled_task_user_rs(void);
-void raw_hid_receive_rs(uint8_t *data, uint8_t length);
-bool process_record_user_rs(uint16_t keycode, keyrecord_t *record);
+// void init_allocator_rs(void);
+// bool encoder_update_user_rs(uint8_t index, bool clockwise);
+// bool oled_task_user_rs(void);
+// void raw_hid_receive_rs(uint8_t *data, uint8_t length);
+// bool process_record_user_rs(uint16_t keycode, keyrecord_t *record);
 
-void raw_hid_receive(uint8_t *data, uint8_t length) {
-    raw_hid_receive_rs(data, length);
-}
+// extern void raw_hid_receive(uint8_t *data, uint8_t length);
+// extern bool encoder_update_user(uint8_t index, bool clockwise);
+// extern bool oled_task_user(void);
+// extern void keyboard_pre_init_user(void);
+// extern bool process_record_user(uint16_t keycode, keyrecord_t *record);
 
-bool encoder_update_user(uint8_t index, bool clockwise) {
-    return encoder_update_user_rs(index, clockwise);
-}
-
-bool oled_task_user(void) {
-    return oled_task_user_rs();
-}
-
-
-void keyboard_pre_init_user(void) {
-    init_allocator_rs();
-}
-
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    return process_record_user_rs(keycode, record);
-        switch (keycode) {
-        case KC_PRVWD:
-            if (record->event.pressed) {
-                if (keymap_config.swap_lctl_lgui) {
-                    register_mods(mod_config(MOD_LALT));
-                    register_code(KC_LEFT);
-                } else {
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_LEFT);
-                }
-            } else {
-                if (keymap_config.swap_lctl_lgui) {
-                    unregister_mods(mod_config(MOD_LALT));
-                    unregister_code(KC_LEFT);
-                } else {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_LEFT);
-                }
-            }
-            break;
-        case KC_NXTWD:
-             if (record->event.pressed) {
-                if (keymap_config.swap_lctl_lgui) {
-                    register_mods(mod_config(MOD_LALT));
-                    register_code(KC_RIGHT);
-                } else {
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_RIGHT);
-                }
-            } else {
-                if (keymap_config.swap_lctl_lgui) {
-                    unregister_mods(mod_config(MOD_LALT));
-                    unregister_code(KC_RIGHT);
-                } else {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_RIGHT);
-                }
-            }
-            break;
-        case KC_LSTRT:
-            if (record->event.pressed) {
-                if (keymap_config.swap_lctl_lgui) {
-                     //CMD-arrow on Mac, but we have CTL and GUI swapped
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_LEFT);
-                } else {
-                    register_code(KC_HOME);
-                }
-            } else {
-                if (keymap_config.swap_lctl_lgui) {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_LEFT);
-                } else {
-                    unregister_code(KC_HOME);
-                }
-            }
-            break;
-        case KC_LEND:
-            if (record->event.pressed) {
-                if (keymap_config.swap_lctl_lgui) {
-                    //CMD-arrow on Mac, but we have CTL and GUI swapped
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_RIGHT);
-                } else {
-                    register_code(KC_END);
-                }
-            } else {
-                if (keymap_config.swap_lctl_lgui) {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_RIGHT);
-                } else {
-                    unregister_code(KC_END);
-                }
-            }
-            break;
-
-        // case KC_F20:
-        //     if (record->event.pressed) {
-        //         encoder_press_user_rs(0);
-        //     }
-        //     break;
-
-        // case KC_F21:
-        //     if (record->event.pressed) {
-        //         encoder_press_user_rs(1);
-        //     }
-        //     break;
-    }
-
-    return true;
-}
+void do_something(uint8_t *data, uint8_t length) {
+  int *ptr = 0;
+  ptr = 0;
+};

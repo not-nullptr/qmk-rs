@@ -9,7 +9,7 @@ fn on_scroll(up: bool) {
 }
 
 #[no_mangle]
-pub extern "C" fn encoder_update_user_rs(_index: u8, clockwise: bool) -> bool {
+pub extern "C" fn encoder_update_user(_index: u8, clockwise: bool) -> bool {
     on_scroll(!clockwise);
     false
 }

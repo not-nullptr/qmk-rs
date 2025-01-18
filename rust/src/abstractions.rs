@@ -21,7 +21,6 @@ use crate::{
     minigames::{
         flappy_bird::FlappyBird,
         game::{Game, GameContext},
-        raycast::RaycasterGame,
         tetris::Tetris,
     },
     raw_c::{
@@ -956,10 +955,6 @@ impl Screen {
 
                 AppPage::FlappyBird => {
                     run_minigame::<FlappyBird>(&mut state, &keys);
-                }
-
-                AppPage::Raycast => {
-                    run_minigame::<RaycasterGame>(&mut state, &keys);
                 }
 
                 AppPage::Credits => {

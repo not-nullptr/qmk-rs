@@ -1,7 +1,6 @@
 #![no_std]
 #![no_builtins]
 #![crate_type = "staticlib"]
-#![feature(core_intrinsics)]
 
 extern crate alloc;
 extern crate core;

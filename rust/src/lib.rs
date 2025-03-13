@@ -2,6 +2,8 @@
 #![no_builtins]
 #![crate_type = "staticlib"]
 
+use qmk_macro::save;
+
 extern crate alloc;
 extern crate core;
 
@@ -25,3 +27,5 @@ mod state;
 fn panic_handler(_info: &core::panic::PanicInfo) -> ! {
     loop {}
 }
+
+save!("../keyboards/sofle/keymaps/nulls_keymap/rust_bindings.c");

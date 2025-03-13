@@ -1,6 +1,6 @@
 #![allow(warnings)]
 
-use core::any::{type_name, type_name_of_val, Any, TypeId};
+use core::any::{Any, TypeId, type_name, type_name_of_val};
 
 use alloc::{
     borrow::ToOwned,
@@ -27,7 +27,7 @@ use crate::{
         oled_clear, oled_render_dirty, oled_set_cursor, oled_write as oled_write_C,
         oled_write_pixel, oled_write_raw, tap_code16,
     },
-    state::{AppPage, AppState, APP_STATE},
+    state::{APP_STATE, AppPage, AppState},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -780,11 +780,7 @@ pub fn press_key(keycode: Keycode) {
 }
 
 fn round_towards_infinity(x: i32, y: i32) -> i32 {
-    if x <= 0 {
-        y
-    } else {
-        (x + y - 1) / y * y
-    }
+    if x <= 0 { y } else { (x + y - 1) / y * y }
 }
 
 pub struct Screen;
@@ -966,8 +962,8 @@ impl Screen {
                     Screen::newline();
                     Screen::draw_text("sofle", true);
                     Screen::draw_text("ftw!!", true);
-                    let y = Screen::SCREEN_HEIGHT - CREDITS[0].height - 8;
-                    Screen::draw_image(&animate_frames(6, &CREDITS, state.animation_counter), 0, y);
+                    // let y = Screen::SCREEN_HEIGHT - CREDITS[0].height - 8;
+                    // Screen::draw_image(&animate_frames(6, &CREDITS, state.animation_counter), 0, y);
                 }
             }
         });

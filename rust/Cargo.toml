@@ -12,9 +12,9 @@ path = "src/lib.rs"
 panic = "abort"
 
 [dependencies]
-
 include_image = { path = "../include_image" }
 include_image_structs = { path = "../include_image_structs" }
+qmk_macro = { path = "../qmk_macro" }
 embedded-alloc = "0.6.0"
 rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
 critical-section = "1.2.0"

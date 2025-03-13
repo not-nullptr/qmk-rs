@@ -1,3 +1,5 @@
+use qmk_macro::qmk_callback;
+
 use crate::abstractions::Keycode;
 
 fn on_scroll(up: bool) {
@@ -8,8 +10,8 @@ fn on_scroll(up: bool) {
     };
 }
 
-#[no_mangle]
-pub extern "C" fn encoder_update_user(_index: u8, clockwise: bool) -> bool {
+#[qmk_callback(uint8_t, bool, bool)]
+fn encoder_update_user(_index: u8, clockwise: bool) -> bool {
     on_scroll(!clockwise);
     false
 }

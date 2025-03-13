@@ -1,9 +1,10 @@
 use critical_section::with;
+use qmk_macro::qmk_callback;
 
 use crate::state::APP_STATE;
 
-#[no_mangle]
-pub extern "C" fn raw_hid_receive(data: &mut [u8], _length: u8) {
+#[qmk_callback(uint8_t_PTR, uint8_t, void)]
+fn raw_hid_receive(data: &mut [u8], _length: u8) {
     with(|cs| {
         let mut state = APP_STATE.borrow(cs).borrow_mut();
         let is_ours = data.len() > 2 && data[0] == 0x66 && data[1] == 0x66;

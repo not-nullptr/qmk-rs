@@ -27,10 +27,13 @@ impl QmkCallback {
 
     fn to_c_fn(&self) -> String {
         let suffix_name = self.suffix_name();
+        let name = &self.name;
+        let args = &self.args;
+        let return_type = &self.return_type;
+
         if &self.return_type == "void" && self.args.len() == 0 {
             return format!(
-                "void {}(void);\nvoid {}(void) {{\n  return {}();\n}}",
-                suffix_name, self.name, suffix_name
+                "void {suffix_name}(void);\nvoid {name}(void) {{\n  return {suffix_name}();\n}}",
             );
         }
 
@@ -38,7 +41,7 @@ impl QmkCallback {
             .args
             .iter()
             .enumerate()
-            .map(|(i, a)| format!("{} arg{}", a, i))
+            .map(|(i, arg_type)| format!("{arg_type} arg{i}"))
             .collect::<Vec<_>>()
             .join(", ");
 
@@ -46,17 +49,16 @@ impl QmkCallback {
             .args
             .iter()
             .enumerate()
-            .map(|(i, _)| format!("arg{}", i))
+            .map(|(i, _)| format!("arg{i}"))
             .collect::<Vec<_>>()
             .join(", ");
 
-        let binding_fn = format!("{} {}({});", self.return_type, suffix_name, fn_args);
+        let binding_fn = format!("{return_type} {suffix_name}({fn_args});");
         let glue_fn = format!(
-            "{} {}({}) {{\n  return {}({});\n}}",
-            self.return_type, self.name, fn_args, suffix_name, passed_args
+            "{return_type} {name}({fn_args}) {{\n  return {suffix_name}({passed_args});\n}}",
         );
 
-        format!("{}\n{}", binding_fn, glue_fn)
+        format!("{binding_fn}\n{glue_fn}")
     }
 
     fn suffix_name(&self) -> String {
@@ -76,9 +78,20 @@ pub fn qmk_callback(
 
     let name = function.sig.ident.to_string();
     // add _rs to the end of the ident
-    let modified_name = format!("{}_rs", name);
+    let modified_name = format!("{name}_rs");
     function.sig.ident = Ident::new(modified_name.as_str(), Span::call_site());
-    let mut args: Vec<_> = types.iter().map(|arg| arg.to_string()).collect();
+    let mut args: Vec<_> = types
+        .iter()
+        .map(|arg| {
+            let arg_str = arg.to_string();
+            if arg_str.ends_with("_PTR") {
+                arg_str.replace("_PTR", "*")
+            } else {
+                arg_str
+            }
+        })
+        .collect();
+    eprintln!("{:?}", args);
     let return_type = args.pop().expect("return type is required");
 
     let mut callbacks = CALLBACKS.lock().unwrap();
@@ -125,6 +138,10 @@ pub fn save(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 fn write_bindings(path: String) -> anyhow::Result<()> {
+    // delete if exists
+    if fs::exists(&path)? {
+        fs::remove_file(&path)?;
+    }
     let mut callbacks = CALLBACKS.lock().unwrap();
 
     let fns = callbacks

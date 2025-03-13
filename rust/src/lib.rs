@@ -23,9 +23,9 @@ mod rotary_encoder;
 mod screen;
 mod state;
 
+save!("../keyboards/sofle/keymaps/nulls_keymap/rust_bindings.c");
+
 #[panic_handler]
 fn panic_handler(_info: &core::panic::PanicInfo) -> ! {
     loop {}
 }
-
-save!("../keyboards/sofle/keymaps/nulls_keymap/rust_bindings.c");

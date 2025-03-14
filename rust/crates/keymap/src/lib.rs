@@ -5,5 +5,6 @@
 extern crate alloc;
 extern crate core;
 
+#[cfg(not(test))]
 mod heap;
 mod oled;

@@ -6,7 +6,8 @@ members = [
     "crates/include_image",
     "crates/keymap",
     "crates/qmk_callback",
-    "crates/qmk_macro", "crates/qmk_callback_parsing",
+    "crates/qmk_macro",
+    "crates/qmk_callback_parsing",
 ]
 
 [profile.dev]

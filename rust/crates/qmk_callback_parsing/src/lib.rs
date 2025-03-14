@@ -41,13 +41,7 @@ impl QmkCallback {
         let args = &self.signature.args;
         let return_type = &self.signature.return_type;
 
-        if return_type.name == "void" && args.len() == 0 {
-            return format!(
-                "void {suffix_name}(void);\nvoid {name}(void) {{\n  return {suffix_name}();\n}}",
-            );
-        }
-
-        let fn_args = args
+        let mut fn_args = args
             .iter()
             .enumerate()
             .map(|(i, arg_type)| format!("{} arg{i}", arg_type.name))
@@ -60,6 +54,10 @@ impl QmkCallback {
             .map(|(i, _)| format!("arg{i}"))
             .collect::<Vec<_>>()
             .join(", ");
+
+        if fn_args.is_empty() {
+            fn_args = String::from("void");
+        }
 
         let binding_fn = format!("{} {suffix_name}({fn_args});", return_type.name);
         let glue_fn = format!(
@@ -116,5 +114,39 @@ impl Parse for Signature {
         let return_type: SigType = input.parse()?;
 
         Ok(Signature { args, return_type })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use syn::parse_quote;
+
+    #[test]
+    fn pointer_arguments() {
+        let name = String::from("test_callback");
+        let signature: Signature = parse_quote!(
+            (uint16_t*, bool, void*) -> void
+        );
+        let qmk_callback = QmkCallback::new(name.clone(), signature);
+        let c_fn = qmk_callback.to_c_fn();
+        assert_eq!(
+            c_fn,
+            "void test_callback_rs(uint16_t* arg0, bool arg1, void* arg2);\nvoid test_callback(uint16_t* arg0, bool arg1, void* arg2) {\n  return test_callback_rs(arg0, arg1, arg2);\n}"
+        );
+    }
+
+    #[test]
+    fn no_arguments() {
+        let name = String::from("test_callback");
+        let signature: Signature = parse_quote!(
+            () -> void
+        );
+        let qmk_callback = QmkCallback::new(name.clone(), signature);
+        let c_fn = qmk_callback.to_c_fn();
+        assert_eq!(
+            c_fn,
+            "void test_callback_rs(void);\nvoid test_callback(void) {\n  return test_callback_rs();\n}"
+        );
     }
 }

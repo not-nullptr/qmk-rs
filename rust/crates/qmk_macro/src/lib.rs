@@ -14,7 +14,6 @@ use syn::{
 #[doc = "## Example"]
 #[doc = "```"]
 #[doc = "use qmk_macro::qmk_callback;"]
-#[doc = "use qmk_macro::save;"]
 #[doc = ""]
 #[doc = "#[qmk_callback((uint8_t, bool) -> bool)]"]
 #[doc = "fn my_callback(arg1: u8, arg2: bool) -> bool {"]

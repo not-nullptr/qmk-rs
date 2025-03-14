@@ -1,4 +1,5 @@
 use embedded_alloc::LlffHeap;
+use panic_halt as _;
 use qmk_macro::qmk_callback;
 use rp2040_hal as _;
 

@@ -1,0 +1,10 @@
+[package]
+name = "qmk"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+num-traits = { version = "0.2.19", default-features = false }
+qmk-sys = { path = "../qmk_sys" }
+qmk-macro = { path = "../qmk_macro" }
+include-image = { path = "../include_image" }

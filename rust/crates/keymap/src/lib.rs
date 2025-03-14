@@ -7,4 +7,5 @@ extern crate core;
 
 #[cfg(not(test))]
 mod heap;
-mod oled;
+mod image;
+mod screen;

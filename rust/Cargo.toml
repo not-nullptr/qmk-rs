@@ -8,7 +8,7 @@ members = [
     "crates/qmk_callback",
     "crates/qmk_macro",
     "crates/qmk_callback_parsing",
-    "crates/qmk_sys",
+    "crates/qmk_sys", "crates/qmk",
 ]
 
 [profile.dev]

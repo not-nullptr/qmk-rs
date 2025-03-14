@@ -13,9 +13,8 @@ path = "src/lib.rs"
 embedded-alloc = "0.6.0"
 include-image = { path = "../include_image" }
 panic-halt = "1.0.0"
-qmk-macro = { path = "../qmk_macro" }
 rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
-qmk-sys = { path = "../qmk_sys" }
+qmk = { path = "../qmk" }
 
 [build-dependencies]
 qmk-callback = { path = "../qmk_callback" }

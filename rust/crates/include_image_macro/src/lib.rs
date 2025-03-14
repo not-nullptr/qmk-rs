@@ -49,6 +49,10 @@ fn path_to_image(path: &str) -> (Vec<u8>, String, usize, usize) {
 
     let bytes = to_format(img, width, height);
 
+    let path = path
+        .split('/')
+        .last()
+        .expect("failed to get last part of path");
     let split: Vec<_> = path.split('.').collect();
     let name = remove_non_alphanumeric(&split[0..split.len() - 1].join(".")).to_uppercase();
 
@@ -72,7 +76,7 @@ pub fn include_image(input: TokenStream) -> TokenStream {
     let byte_tokens = bytes.iter().map(|b| quote! { #b }).collect::<Vec<_>>();
 
     let output = quote! {
-        pub const #name_ident: include_image_structs::QmkImage<#byte_count> = include_image_structs::QmkImage {
+        pub const #name_ident: ::include_image::QmkImage<#byte_count> = ::include_image::QmkImage {
             width: #width,
             height: #height,
             bytes: [#(#byte_tokens),*],

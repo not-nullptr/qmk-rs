@@ -1,7 +1,7 @@
 TARGET=thumbv6m-none-eabi
 
-build: src/*.rs Cargo.toml
-	cargo build --release --target $(TARGET)
+build: $(shell find . -name '*.rs') $(shell find . -name 'Cargo.*')
+	cargo build -p keymap --release --target $(TARGET)
 	ln -sf ./target/$(TARGET)/release/libkeymap.a \
 		rust_keymap.a
 macro-expand:

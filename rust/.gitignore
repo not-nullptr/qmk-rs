@@ -1,1 +1,3 @@
 target
+Cargo.lock
+rust_keymap.a

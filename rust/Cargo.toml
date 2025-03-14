@@ -1,27 +1,17 @@
-[package]
-name = "nulls-keymap"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "crates/include_image_macro",
+    "crates/include_image_structs",
+    "crates/include_image",
+    "crates/keymap",
+    "crates/qmk",
+]
 
-[lib]
-name = "keymap"
-crate-type = ["staticlib"]
-path = "src/lib.rs"
+[profile.dev]
+panic = "abort"
 
 [profile.release]
 panic = "abort"
-
-[dependencies]
-include_image = { path = "../include_image" }
-include_image_structs = { path = "../include_image_structs" }
-qmk_macro = { path = "../qmk_macro" }
-embedded-alloc = "0.6.0"
-rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
-critical-section = "1.2.0"
-enum-iterator = "2.1.0"
-cortex-m = "0.7.7"
-
-[build-dependencies]
-bindgen = "0.71.1"
-regex = "1.11.1"
-walkdir = "2.5.0"
+lto = true
+opt-level = "z"

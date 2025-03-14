@@ -1,0 +1,8 @@
+[package]
+name = "include_image"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+include_image_macro = { path = "../include_image_macro" }
+include_image_structs = { path = "../include_image_structs" }

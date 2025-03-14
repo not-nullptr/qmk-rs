@@ -1,0 +1,17 @@
+[package]
+name = "keymap"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "keymap"
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+
+[dependencies]
+embedded-alloc = "0.6.0"
+include_image = { path = "../include_image" }
+panic-halt = "1.0.0"
+qmk_macro = { path = "../qmk_macro" }
+rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }

@@ -3,7 +3,7 @@
 #include <qp.h>
 #include QMK_KEYBOARD_H
 // also include the rust_bindings C file
-#include <rust_bindings.c>
+// #include <rust_bindings.c>
 
 enum sofle_layers {
     /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */

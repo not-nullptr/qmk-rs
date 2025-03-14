@@ -3,7 +3,7 @@ use qmk_macro::qmk_callback;
 
 use crate::state::APP_STATE;
 
-#[qmk_callback(uint8_t_PTR, uint8_t, void)]
+#[qmk_callback((uint8_t*, uint8_t) -> void)]
 fn raw_hid_receive(data: &mut [u8], _length: u8) {
     with(|cs| {
         let mut state = APP_STATE.borrow(cs).borrow_mut();

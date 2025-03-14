@@ -10,7 +10,7 @@ fn on_scroll(up: bool) {
     };
 }
 
-#[qmk_callback(uint8_t, bool, bool)]
+#[qmk_callback((uint8_t, bool) -> bool)]
 fn encoder_update_user(_index: u8, clockwise: bool) -> bool {
     on_scroll(!clockwise);
     false

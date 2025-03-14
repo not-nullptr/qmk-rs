@@ -6,7 +6,7 @@ use crate::{
 use critical_section::with;
 use qmk_macro::qmk_callback;
 
-#[qmk_callback(uint16_t, keyrecord_t_PTR, bool)]
+#[qmk_callback((uint16_t, keyrecord_t*) -> bool)]
 fn process_record_user(keycode: Keycode, record: *mut KeyRecord) -> bool {
     with(|cs| {
         let record = unsafe { *record };

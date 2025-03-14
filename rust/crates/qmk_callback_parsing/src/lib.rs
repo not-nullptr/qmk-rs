@@ -140,13 +140,13 @@ mod tests {
     fn no_arguments() {
         let name = String::from("test_callback");
         let signature: Signature = parse_quote!(
-            () -> void
+            () -> bool
         );
         let qmk_callback = QmkCallback::new(name.clone(), signature);
         let c_fn = qmk_callback.to_c_fn();
         assert_eq!(
             c_fn,
-            "void test_callback_rs(void);\nvoid test_callback(void) {\n  return test_callback_rs();\n}"
+            "bool test_callback_rs(void);\nbool test_callback(void) {\n  return test_callback_rs();\n}"
         );
     }
 }

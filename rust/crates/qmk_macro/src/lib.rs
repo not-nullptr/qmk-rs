@@ -138,6 +138,19 @@ impl Parse for Signature {
     }
 }
 
+#[doc = "# QMK Callback"]
+#[doc = "This macro is used to define a QMK callback function. It takes a signature in the form of `(Ident, ..) -> Ident` where each Ident is a C typedef available from within QMK. Each type is allowed to be a pointer type of any number of levels."]
+#[doc = "## Example"]
+#[doc = "```"]
+#[doc = "use qmk_macro::qmk_callback;"]
+#[doc = "use qmk_macro::save;"]
+#[doc = ""]
+#[doc = "#[qmk_callback((uint8_t, bool) -> bool)]"]
+#[doc = "fn my_callback(arg1: u8, arg2: bool) -> bool {"]
+#[doc = "    // do something"]
+#[doc = "    true"]
+#[doc = "}"]
+#[doc = "```"]
 #[proc_macro_attribute]
 pub fn qmk_callback(
     attr: proc_macro::TokenStream,
@@ -186,10 +199,13 @@ pub fn qmk_callback(
         .chain(std::iter::once(&callback.signature.return_type))
         .map(|arg| {
             let arg_ident = &arg.token;
+            // r-a doesn't support stringify! in doc, so we do this instead
+            let doc_literal = format!("## C type `{}`\n`{}`, although shown as a Rust type, is actually a C type. **The lack of an error here does not guarantee a compiling QMK project** — you must verify this type is valid in the C glue code.", arg.name, arg.name);
             quote! {
                 {
                     #[allow(unused_variables)]
                     #[allow(non_camel_case_types)]
+                    #[doc = #doc_literal]
                     type #arg_ident = ();
                 };
             }
@@ -209,10 +225,28 @@ pub fn qmk_callback(
         .stmts
         .insert(0, syn::parse2(arg_types).unwrap());
     // convert function back to TokenStream
-    let output = function.into_token_stream();
-    output.into()
+    function.into_token_stream().into()
 }
 
+#[doc = "This macro saves the collected QMK callbacks to a file. It takes a string literal as an argument, as the path to save the C file to. This should be called after all QMK callbacks have been defined."]
+#[doc = "## Example"]
+#[doc = "```"]
+#[doc = "// callback.rs"]
+#[doc = "use qmk_macro::qmk_callback;"]
+#[doc = ""]
+#[doc = "#[qmk_callback((uint8_t, bool) -> bool)]"]
+#[doc = "fn my_callback(arg1: u8, arg2: bool) -> bool {"]
+#[doc = "    // do something"]
+#[doc = "    true"]
+#[doc = "}"]
+#[doc = ""]
+#[doc = "// lib.rs"]
+#[doc = "mod callback;"]
+#[doc = ""]
+#[doc = "use qmk_macro::save;"]
+#[doc = ""]
+#[doc = "save!(\"../keyboards/my_keyboard/keymaps/my_keymap/callbacks.c\");"]
+#[doc = "```"]
 #[proc_macro]
 pub fn save(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let path = parse_macro_input!(input as LitStr);

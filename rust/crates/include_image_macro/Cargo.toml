@@ -1,5 +1,5 @@
 [package]
-name = "include_image_macro"
+name = "include-image-macro"
 version = "0.1.0"
 edition = "2024"
 
@@ -11,4 +11,4 @@ image = "0.25.5"
 quote = "1.0.38"
 regex = "1.11.1"
 syn = "2.0.94"
-include_image_structs = { path = "../include_image_structs" }
+include-image-structs = { path = "../include_image_structs" }

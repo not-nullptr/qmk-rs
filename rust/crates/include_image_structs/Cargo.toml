@@ -1,5 +1,5 @@
 [package]
-name = "include_image_structs"
+name = "include-image-structs"
 version = "0.1.0"
 edition = "2024"
 

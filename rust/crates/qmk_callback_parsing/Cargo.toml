@@ -1,5 +1,5 @@
 [package]
-name = "qmk_callback_parsing"
+name = "qmk-callback-parsing"
 version = "0.1.0"
 edition = "2024"
 

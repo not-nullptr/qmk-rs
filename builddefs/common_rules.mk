@@ -25,7 +25,6 @@ $(foreach OUTPUT,$(OUTPUTS),$(eval $(OUTPUT)_OBJ +=$(call OBJ_FROM_SRC,$(OUTPUT)
 OBJ := $(foreach OUTPUT,$(OUTPUTS),$($(OUTPUT)_OBJ))
 RUST_OBJ := rust/rust_keymap.a
 OBJ += $(RUST_OBJ)
-OBJ += $(foreach OUTPUT,$(OUTPUTS),$($(OUTPUT)_OBJ))
 NO_LTO_OBJ := $(filter %.a,$(OBJ))
 
 MASTER_OUTPUT := $(firstword $(OUTPUTS))
@@ -284,7 +283,7 @@ $1_ASFLAGS = $$(ALL_ASFLAGS) $$($1_DEFS) $$($1_INCFLAGS) $$($1_CONFIG_FLAGS)
 
 # Compile: create object file from Rust source files.
 $(RUST_OBJ): $(shell find ./rust -name '*.rs') $(shell find ./rust -name 'Cargo.*')
-	BINDGEN_CFLAGS='$$($1_CFLAGS)' make -C rust
+	BINDGEN_CFLAGS='$$($1_CFLAGS)' BINDGEN_INCLUDE='$$($1_INCFLAGS)' make -C rust
 
 # Compile: create object files from C source files.
 $1/%.o : %.c $1/%.d $1/cflags.txt $1/compiler.txt | $(BEGIN)

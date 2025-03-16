@@ -1,9 +1,15 @@
+use alloc::{ffi::CString, string::String};
 use include_image::QmkImage;
 use num_traits::{Num, ToPrimitive};
 
 pub struct Screen;
 
 impl Screen {
+    pub const OLED_DISPLAY_WIDTH: usize = 64;
+    pub const OLED_DISPLAY_HEIGHT: usize = 128;
+    pub const OLED_DISPLAY_SIZE: usize =
+        ((Self::OLED_DISPLAY_WIDTH * Self::OLED_DISPLAY_HEIGHT) / 8);
+
     pub fn draw_pixel<T, U>(x: T, y: U)
     where
         T: Num + ToPrimitive,
@@ -54,6 +60,23 @@ impl Screen {
                     }
                 }
             }
+        }
+    }
+
+    pub fn draw_text<T, U>(row: T, col: U, text: impl Into<String>)
+    where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+    {
+        let Ok(text) = CString::new(text.into()) else {
+            return;
+        };
+        let col = col.to_u8().unwrap_or(255);
+        let row = row.to_u8().unwrap_or(255);
+
+        unsafe {
+            qmk_sys::oled_set_cursor(col, row);
+            qmk_sys::oled_write(text.as_ptr(), false);
         }
     }
 }

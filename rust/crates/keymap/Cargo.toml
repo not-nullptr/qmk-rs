@@ -15,6 +15,17 @@ include-image = { path = "../include_image" }
 panic-halt = "1.0.0"
 rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
 qmk = { path = "../qmk" }
+critical-section = "1.2.0"
+once_cell = { version = "1.21.1", default-features = false, features = [
+    "alloc",
+    "critical-section",
+    "atomic-polyfill",
+] }
+fixed = "1.29.0"
+micromath = "2.1.0"
+
+[target.thumbv6m-none-eabi.dependencies]
+portable-atomic = { version = "1.8", features = ["unsafe-assume-single-core"] }
 
 [build-dependencies]
 qmk-callback = { path = "../qmk_callback" }

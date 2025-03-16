@@ -4,41 +4,45 @@ use image::{ImageBuffer, Luma};
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use regex::Regex;
-use syn::parse_macro_input;
+use syn::{Token, parse::Parse, parse_macro_input};
 
 fn remove_non_alphanumeric(input: &str) -> String {
     let re = Regex::new(r"[^a-zA-Z0-9_]+").unwrap();
     re.replace_all(input, "").to_string()
 }
 
-fn to_format(img: ImageBuffer<Luma<u8>, Vec<u8>>, width: usize, height: usize) -> Vec<u8> {
-    let iter_height = ((height as f64) / 8.0).ceil() as u32;
+fn to_format(
+    img: ImageBuffer<Luma<u8>, Vec<u8>>,
+    width: usize,
+    height: usize,
+    use_fb_format: bool,
+) -> Vec<u8> {
+    let mut output = Vec::new();
+    let blocks_per_col = (height + 7) / 8;
 
-    let mut bytes: Vec<u8> = vec![];
-
-    for unadjusted_y in 0..iter_height {
-        for x in 0..width {
-            let x = x as u32;
-            let mut byte = 0;
+    for x in 0..width {
+        for block in 0..blocks_per_col {
+            let mut byte: u8 = 0;
             for bit in 0..8 {
-                let y = (unadjusted_y * 8) + bit;
-                let Some(px) = img.get_pixel_checked(x, y) else {
-                    continue;
-                };
-                let should_be_lit = px.0[0] > 127;
-                if should_be_lit {
-                    byte |= 1 << bit;
+                let y = block * 8 + bit;
+                if y < height {
+                    let pixel = img.get_pixel(x as u32, y as u32)[0];
+                    if pixel >= 127 {
+                        if use_fb_format {
+                            byte |= 1 << bit;
+                        } else {
+                            byte |= 1 << (7 - bit);
+                        }
+                    }
                 }
             }
-
-            bytes.push(byte);
+            output.push(byte);
         }
     }
-
-    bytes
+    output
 }
 
-fn path_to_image(path: &str) -> (Vec<u8>, String, usize, usize) {
+fn path_to_image(path: &str, use_fb_format: bool) -> (Vec<u8>, String, usize, usize) {
     let img = match image::open(path) {
         Ok(img) => img.to_luma8(),
         Err(e) => panic!("failed to open image {}: {}", path, e),
@@ -47,7 +51,7 @@ fn path_to_image(path: &str) -> (Vec<u8>, String, usize, usize) {
     let width = img.width() as usize;
     let height = img.height() as usize;
 
-    let bytes = to_format(img, width, height);
+    let bytes = to_format(img, width, height, use_fb_format);
 
     let path = path
         .split('/')
@@ -59,11 +63,35 @@ fn path_to_image(path: &str) -> (Vec<u8>, String, usize, usize) {
     (bytes, name, width, height)
 }
 
+struct ParsedArgs {
+    path: String,
+    framebuffer_format: bool,
+}
+
+impl Parse for ParsedArgs {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let path: syn::LitStr = input.parse()?;
+        let fb_format = if input.peek(Token![,]) {
+            input.parse::<Token![,]>()?;
+            let framebuffer_format: syn::LitBool = input.parse()?;
+            framebuffer_format.value()
+        } else {
+            false
+        };
+        let path = path.value();
+        Ok(ParsedArgs {
+            path,
+            framebuffer_format: fb_format,
+        })
+    }
+}
+
 #[proc_macro]
 pub fn include_image(input: TokenStream) -> TokenStream {
-    let input_path = parse_macro_input!(input as syn::LitStr).value();
-
-    let (bytes, name, width, height) = path_to_image(&input_path);
+    // parse the input into a comma separated list of arguments
+    let parsed_args = parse_macro_input!(input as ParsedArgs);
+    let (bytes, name, width, height) =
+        path_to_image(&parsed_args.path, parsed_args.framebuffer_format);
 
     let width = width as u8;
     let height = height as u8;
@@ -88,15 +116,16 @@ pub fn include_image(input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn include_animation(input: TokenStream) -> TokenStream {
-    let input_path = parse_macro_input!(input as syn::LitStr).value();
+    // let input_path = parse_macro_input!(input as syn::LitStr).value();
+    let parsed_args = parse_macro_input!(input as ParsedArgs);
 
-    let files = match fs::read_dir(&input_path) {
+    let files = match fs::read_dir(&parsed_args.path) {
         Ok(res) => res,
         Err(e) => panic!("failed to read animation directory: {}", e),
     };
 
     let name_ident = syn::Ident::new(
-        &remove_non_alphanumeric(&input_path.split("/").last().expect("invalid path"))
+        &remove_non_alphanumeric(&parsed_args.path.split("/").last().expect("invalid path"))
             .to_uppercase(),
         Span::call_site().into(),
     );
@@ -119,7 +148,10 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
     let mut all_lens = 0;
 
     for (_, (name, _)) in files.into_iter().enumerate() {
-        let (bytes, _name, width, height) = path_to_image(&format!("{}/{}", input_path, name));
+        let (bytes, _name, width, height) = path_to_image(
+            &format!("{}/{}", parsed_args.path, name),
+            parsed_args.framebuffer_format,
+        );
 
         if all_lens == 0 {
             all_lens = bytes.len();

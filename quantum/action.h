@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdint.h>
 #include <stdbool.h>
+#ifndef NULLPTR_BINDGEN
 #include "progmem.h"
+#endif
 #include "keyboard.h"
 #include "keycode.h"
 #include "action_code.h"

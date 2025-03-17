@@ -192,6 +192,23 @@ impl Framebuffer {
         }
     }
 
+    pub fn get_pixel<T, U>(&self, x: T, y: U) -> bool
+    where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+    {
+        let x = x.to_u8().unwrap_or(255);
+        let y = y.to_u8().unwrap_or(255);
+        if x >= Screen::OLED_DISPLAY_WIDTH as u8 || y >= Screen::OLED_DISPLAY_HEIGHT as u8 {
+            return false;
+        }
+
+        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+        let bit_position = y % 8;
+
+        self.framebuffer[byte_index] & (1 << bit_position) != 0
+    }
+
     pub fn draw_pixel<T, U>(&mut self, x: T, y: U)
     where
         T: Num + ToPrimitive,

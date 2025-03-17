@@ -21,8 +21,8 @@ once_cell = { version = "1.21.1", default-features = false, features = [
     "critical-section",
     "atomic-polyfill",
 ] }
-fixed = "1.29.0"
 micromath = "2.1.0"
+rp2040-panic-usb-boot = "0.6.0"
 
 [target.thumbv6m-none-eabi.dependencies]
 portable-atomic = { version = "1.8", features = ["unsafe-assume-single-core"] }

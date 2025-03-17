@@ -27,6 +27,10 @@ impl InputHandler {
             Some(self.events.remove(0))
         }
     }
+
+    pub fn collect(&mut self) -> Vec<InputEvent> {
+        core::mem::take(&mut self.events)
+    }
 }
 
 pub enum InputEvent {

@@ -33,7 +33,6 @@ impl Page for HelloWorldPage {
         while let Some(event) = renderer.input.poll() {
             match event {
                 InputEvent::EncoderClick(i) => {
-                    // self.target = (self.cursor.0 as f32, self.cursor.1 as f32);
                     if i == 0 {
                         self.target = (self.cursor.0 as f32, self.cursor.1 as f32);
                     } else {

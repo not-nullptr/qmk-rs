@@ -6,29 +6,20 @@ use alloc::boxed::Box;
 #[cfg(not(test))]
 use micromath::F32Ext;
 use qmk::framebuffer::Framebuffer;
-pub struct TransitionHandler {
+
+use super::TransitionHandler;
+
+pub struct SlideTransition {
     to: Box<dyn Page>,
     progress: u8,
 }
 
-fn ease_in_out_expo(x: f32) -> f32 {
-    if x == 0.0 {
-        return 0.0;
-    } else if x == 1.0 {
-        return 1.0;
-    } else if x < 0.5 {
-        return (2.0f32.powf(20.0 * x - 10.0)) / 2.0;
-    } else {
-        return (2.0 - 2.0f32.powf(-20.0 * x + 10.0)) / 2.0;
-    }
-}
-
-impl TransitionHandler {
-    pub fn new(to: Box<dyn Page>) -> Self {
+impl TransitionHandler for SlideTransition {
+    fn new(to: Box<dyn Page>) -> Self {
         Self { to, progress: 5 }
     }
 
-    pub fn render(&mut self, renderer: &mut RenderInfo) -> bool {
+    fn render(&mut self, renderer: &mut RenderInfo) -> bool {
         let mut from_framebuffer = Framebuffer::new();
         if self.progress >= 15 {
             return true;
@@ -54,7 +45,19 @@ impl TransitionHandler {
         false
     }
 
-    pub fn take_page(self) -> Box<dyn Page> {
+    fn take_page(self: Box<Self>) -> Box<dyn Page> {
         self.to
+    }
+}
+
+fn ease_in_out_expo(x: f32) -> f32 {
+    if x == 0.0 {
+        return 0.0;
+    } else if x == 1.0 {
+        return 1.0;
+    } else if x < 0.5 {
+        return (2.0f32.powf(20.0 * x - 10.0)) / 2.0;
+    } else {
+        return (2.0 - 2.0f32.powf(-20.0 * x + 10.0)) / 2.0;
     }
 }

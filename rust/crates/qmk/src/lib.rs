@@ -4,6 +4,7 @@ extern crate alloc;
 
 pub use qmk_macro::*;
 pub mod framebuffer;
+pub mod keyboard;
 pub mod logging;
 pub mod screen;
 

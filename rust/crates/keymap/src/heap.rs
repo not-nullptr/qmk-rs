@@ -1,7 +1,7 @@
 use embedded_alloc::LlffHeap;
-use panic_halt as _;
 use qmk::qmk_callback;
 use rp2040_hal as _;
+use rp2040_panic_usb_boot as _;
 
 const HEAP_SIZE: usize = 64000;
 

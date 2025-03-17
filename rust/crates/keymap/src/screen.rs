@@ -5,19 +5,23 @@ use core::{
 
 use crate::{
     page::RenderInfo,
-    pages::TransitionHandler,
+    pages::{DitherTransition, SlideTransition, TRANSITION_TYPE, TransitionHandler},
     state::{INPUT_HANDLER, PAGE},
 };
+use alloc::boxed::Box;
 use critical_section::{CriticalSection, Mutex, with};
-use qmk::{framebuffer::Framebuffer, qmk_callback, qmk_log, screen::Screen};
+use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Screen};
 
 pub static TICK: AtomicU32 = AtomicU32::new(0);
-static TRANSITION: Mutex<RefCell<Option<TransitionHandler>>> = Mutex::new(RefCell::new(None));
+static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
+    Mutex::new(RefCell::new(None));
 
 #[qmk_callback(() -> bool)]
 fn oled_task_user() -> bool {
+    if Keyboard::is_right() {
+        return false;
+    }
     let tick = TICK.load(Ordering::SeqCst);
-    qmk_log!("oled_task_user: tick {}", tick);
     TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
     // we need to use a critical section here because the framebuffer
     // is not actually owned by us -- it's owned by the C code and
@@ -118,7 +122,11 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) {
     if let Some(new_page) = page.render(&mut info) {
         drop(page);
         drop(input);
-        *transitioning = Some(TransitionHandler::new(new_page));
+        *transitioning = match TRANSITION_TYPE.load(Ordering::SeqCst) {
+            0 => Some(Box::new(DitherTransition::new(new_page))),
+            1 => Some(Box::new(SlideTransition::new(new_page))),
+            _ => Some(Box::new(DitherTransition::new(new_page))),
+        };
         drop(transitioning);
         draw_screen(framebuffer, cs);
     }

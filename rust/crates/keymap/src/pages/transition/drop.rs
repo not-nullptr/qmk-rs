@@ -32,6 +32,7 @@ impl TransitionHandler for SlideTransition {
             cs: renderer.cs,
             tick: renderer.tick,
             input: renderer.input,
+            actions: renderer.actions,
         };
         let mut from = PAGE.borrow_ref_mut(renderer.cs);
         from.render(&mut from_renderer);

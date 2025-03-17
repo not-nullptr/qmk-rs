@@ -16,7 +16,9 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#ifndef NULLPTR_BINDGEN
 #include "progmem.h"
+#endif
 #include "sync_timer.h"
 #include "rgblight.h"
 #include "color.h"

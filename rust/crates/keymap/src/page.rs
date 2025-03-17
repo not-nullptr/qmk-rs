@@ -1,4 +1,4 @@
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use critical_section::CriticalSection;
 use qmk::framebuffer::Framebuffer;
 
@@ -13,4 +13,5 @@ pub struct RenderInfo<'a> {
     pub cs: CriticalSection<'a>,
     pub tick: u32,
     pub input: &'a mut InputHandler,
+    pub actions: &'a mut Vec<Box<dyn FnOnce()>>,
 }

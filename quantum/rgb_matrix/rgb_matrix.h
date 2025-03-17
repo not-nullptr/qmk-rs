@@ -120,7 +120,9 @@ enum rgb_matrix_effects {
 // --------------------------------------
 // -----Begin rgb effect enum macros-----
 #define RGB_MATRIX_EFFECT(name, ...) RGB_MATRIX_##name,
+#ifndef NULLPTR_BINDGEN
 #include "rgb_matrix_effects.inc"
+#endif
 #undef RGB_MATRIX_EFFECT
 
 #if defined(RGB_MATRIX_CUSTOM_KB) || defined(RGB_MATRIX_CUSTOM_USER)

@@ -8,3 +8,6 @@ num-traits = { version = "0.2.19", default-features = false }
 qmk-sys = { path = "../qmk_sys" }
 qmk-macro = { path = "../qmk_macro" }
 include-image = { path = "../include_image" }
+micromath = "2.1.0"
+rust_decimal_macros = "1.36.0"
+fixed = "1.29.0"

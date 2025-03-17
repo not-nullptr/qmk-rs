@@ -17,7 +17,9 @@
  */
 
 #include "rgb_matrix.h"
+#ifndef NULLPTR_BINDGEN
 #include "progmem.h"
+#endif
 #include "eeprom.h"
 #include "eeconfig.h"
 #include "keyboard.h"
@@ -27,7 +29,9 @@
 #include <math.h>
 #include <stdlib.h>
 
+#ifndef NULLPTR_BINDGEN
 #include <lib/lib8tion/lib8tion.h>
+#endif
 
 #ifndef RGB_MATRIX_CENTER
 const led_point_t k_rgb_matrix_center = {112, 32};
@@ -40,13 +44,16 @@ __attribute__((weak)) rgb_t rgb_matrix_hsv_to_rgb(hsv_t hsv) {
 }
 
 // Generic effect runners
+#ifndef NULLPTR_BINDGEN
 #include "rgb_matrix_runners.inc"
+#endif
 
 // ------------------------------------------
 // -----Begin rgb effect includes macros-----
 #define RGB_MATRIX_EFFECT(name)
 #define RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
+#ifndef NULLPTR_BINDGEN
 #include "rgb_matrix_effects.inc"
 #ifdef RGB_MATRIX_CUSTOM_KB
 #    include "rgb_matrix_kb.inc"
@@ -54,6 +61,8 @@ __attribute__((weak)) rgb_t rgb_matrix_hsv_to_rgb(hsv_t hsv) {
 #ifdef RGB_MATRIX_CUSTOM_USER
 #    include "rgb_matrix_user.inc"
 #endif
+#endif
+
 
 #undef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 #undef RGB_MATRIX_EFFECT
@@ -95,6 +104,7 @@ void eeconfig_update_rgb_matrix(void) {
 }
 
 void eeconfig_update_rgb_matrix_default(void) {
+    #ifndef NULLPTR_BINDGEN
     dprintf("eeconfig_update_rgb_matrix_default\n");
     rgb_matrix_config.enable = RGB_MATRIX_DEFAULT_ON;
     rgb_matrix_config.mode   = RGB_MATRIX_DEFAULT_MODE;
@@ -102,6 +112,7 @@ void eeconfig_update_rgb_matrix_default(void) {
     rgb_matrix_config.speed  = RGB_MATRIX_DEFAULT_SPD;
     rgb_matrix_config.flags  = RGB_MATRIX_DEFAULT_FLAGS;
     eeconfig_flush_rgb_matrix(true);
+    #endif
 }
 
 void eeconfig_debug_rgb_matrix(void) {
@@ -308,7 +319,10 @@ static void rgb_task_render(uint8_t effect) {
     case RGB_MATRIX_##name:                   \
         rendering = name(&rgb_effect_params); \
         break;
+
+#ifndef NULLPTR_BINDGEN
 #include "rgb_matrix_effects.inc"
+#endif
 #undef RGB_MATRIX_EFFECT
 
 #if defined(RGB_MATRIX_CUSTOM_KB) || defined(RGB_MATRIX_CUSTOM_USER)

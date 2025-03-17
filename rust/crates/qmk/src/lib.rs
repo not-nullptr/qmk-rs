@@ -6,6 +6,7 @@ pub use qmk_macro::*;
 pub mod framebuffer;
 pub mod keyboard;
 pub mod logging;
+pub mod rgb;
 pub mod screen;
 
 use qmk_sys::keyrecord_t;

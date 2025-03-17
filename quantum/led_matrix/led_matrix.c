@@ -18,8 +18,10 @@
  */
 
 #include "led_matrix.h"
+#ifndef NULLPTR_BINDGEN
 #include "progmem.h"
 #include "eeprom.h"
+#endif
 #include "eeconfig.h"
 #include "keyboard.h"
 #include "sync_timer.h"

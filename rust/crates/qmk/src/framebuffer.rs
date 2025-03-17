@@ -1,7 +1,16 @@
 use crate::screen::Screen;
 use alloc::string::String;
 use core::mem::transmute;
+use fixed::{
+    FixedI16,
+    types::{
+        I8F8, I12F4,
+        extra::{U4, U6, U7, U8},
+    },
+};
 use include_image::{QmkImage, include_image};
+#[allow(unused_imports)]
+use micromath::F32Ext;
 use num_traits::{Num, ToPrimitive};
 use qmk_sys::{oled_buffer_reader_t, oled_write_raw_byte};
 
@@ -180,6 +189,10 @@ impl Framebuffer {
         }
     }
 
+    pub fn from_array(framebuffer: FramebufferArray) -> Self {
+        Self { framebuffer }
+    }
+
     pub fn take_framebuffer(self) -> FramebufferArray {
         let framebuffer = self.framebuffer;
         framebuffer
@@ -283,6 +296,69 @@ impl Framebuffer {
         }
     }
 
+    // nearest neighbour interpolation
+    pub fn scale_around<T, U, V, W>(&mut self, x: T, y: U, width: V, height: W)
+    where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+        V: Num + ToPrimitive,
+        W: Num + ToPrimitive,
+    {
+        let center = (x.to_i32().unwrap_or(0), y.to_i32().unwrap_or(0));
+        let new_width = width.to_i32().unwrap_or(0);
+        let new_height = height.to_i32().unwrap_or(0);
+        let cloned_fb = Framebuffer::from_array(self.framebuffer.clone());
+
+        type Decimal = FixedI16<U6>;
+        const ZERO: Decimal = Decimal::lit("0.0");
+        const ONE: Decimal = Decimal::lit("1.0");
+
+        let center_x = Decimal::saturating_from_num(center.0);
+        let center_y = Decimal::saturating_from_num(center.1);
+        let new_width = Decimal::saturating_from_num(new_width);
+        let new_height = Decimal::saturating_from_num(new_height);
+        let width = Decimal::saturating_from_num(Screen::OLED_DISPLAY_WIDTH as i32);
+        let height = Decimal::saturating_from_num(Screen::OLED_DISPLAY_HEIGHT as i32);
+        let scale_x = new_width / width;
+        let scale_y = new_height / height;
+
+        let mut dst_y = ZERO;
+        let mut dst_x = ZERO;
+
+        while dst_y < height {
+            while dst_x < width {
+                let rel_x = dst_x - center_x;
+                let rel_y = dst_y - center_y;
+
+                let src_x = (rel_x * scale_x + center_x).to_num::<i32>();
+                let src_y = (rel_y * scale_y + center_y).to_num::<i32>();
+                if src_x < 0 || src_x >= Screen::OLED_DISPLAY_WIDTH as i32 {
+                    dst_x += ONE;
+                    continue;
+                }
+                if src_y < 0 || src_y >= Screen::OLED_DISPLAY_HEIGHT as i32 {
+                    dst_x += ONE;
+                    continue;
+                }
+
+                {
+                    let dst_x = dst_x.to_num::<i32>();
+                    let dst_y = dst_y.to_num::<i32>();
+
+                    if cloned_fb.get_pixel(src_x, src_y) {
+                        self.draw_pixel(dst_x as u8, dst_y as u8);
+                    } else {
+                        self.clear_pixel(dst_x as u8, dst_y as u8);
+                    }
+                }
+
+                dst_x += ONE;
+            }
+            dst_x = ZERO;
+            dst_y += ONE;
+        }
+    }
+
     pub fn draw_text<T, U>(&mut self, x: T, y: U, text: impl Into<String>, inverted: bool)
     where
         T: Num + ToPrimitive,
@@ -297,14 +373,16 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_text_centered<T>(&mut self, y: T, text: impl Into<String>, inverted: bool)
+    pub fn draw_text_centered<T, U>(&mut self, x: T, y: U, text: impl Into<String>, inverted: bool)
     where
         T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
     {
         let offset_y = y.to_u8().unwrap_or(255);
         let text = text.into();
         let text_length = text.chars().count() as u8;
-        let offset_x = (Screen::OLED_DISPLAY_WIDTH as u8 - text_length * CHAR_WIDTH as u8) / 2;
+        let offset_x = x.to_u8().unwrap_or(255);
+        let offset_x = offset_x - (text_length * CHAR_WIDTH as u8) / 2;
         self.draw_text(offset_x, offset_y, text, inverted);
     }
 

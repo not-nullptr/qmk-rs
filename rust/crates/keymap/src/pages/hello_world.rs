@@ -4,7 +4,7 @@ use crate::{
     state::InputEvent,
 };
 use alloc::boxed::Box;
-use qmk::screen::Screen;
+use qmk::{rgb::RGBLight, screen::Screen};
 
 use super::HomePage;
 
@@ -71,6 +71,7 @@ impl Page for HelloWorldPage {
         renderer
             .framebuffer
             .fill_rect(self.cursor.0, 0, 2, Screen::OLED_DISPLAY_HEIGHT as u8);
+
         None
     }
 }

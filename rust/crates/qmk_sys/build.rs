@@ -7,6 +7,7 @@ const HEADER_PATHS: &[&str] = &[
     "../../../quantum/action.h",
     "../../../drivers/oled/oled_driver.h",
     "../../../quantum/logging/sendchar.h",
+    "../../../quantum/rgblight/rgblight.h",
 ];
 
 fn main() {
@@ -39,7 +40,12 @@ fn main() {
             })
         }))
         .clang_args(include_directories)
+        .clang_arg("-I/usr/lib/picolibc/riscv64-unknown-elf/include")
         .clang_arg("-D NULLPTR_BINDGEN")
+        .clang_arg("-D MATRIX_ROWS=10")
+        .clang_arg("-D MATRIX_COLS=7")
+        .clang_arg("-D RGB_MATRIX_LED_COUNT=35")
+        .clang_arg("-D EEPROM_TEST_HARNESS")
         .formatter(Formatter::Rustfmt)
         .rustified_enum(".*")
         .constified_enum_module(".*")

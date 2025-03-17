@@ -15,7 +15,7 @@ impl Default for TransitionSettingsPage {
     fn default() -> Self {
         Self {
             list: SelectableList::new(Default::default()),
-            list_items: &["Back", "Dither", "Slide"],
+            list_items: &["Back", "Dither", "Scale", "Slide"],
         }
     }
 }
@@ -32,6 +32,7 @@ impl Page for TransitionSettingsPage {
         }
 
         renderer.framebuffer.draw_text_centered(
+            32,
             8,
             self.list_items[TRANSITION_TYPE.load(Ordering::SeqCst) as usize + 1],
             false,

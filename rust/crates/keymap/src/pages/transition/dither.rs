@@ -38,6 +38,7 @@ impl TransitionHandler for DitherTransition {
             framebuffer: &mut to_framebuffer,
             input: renderer.input,
             tick: renderer.tick,
+            actions: renderer.actions,
         };
 
         self.to.render(&mut to_renderer);

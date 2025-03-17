@@ -167,7 +167,9 @@ enum RGBLIGHT_EFFECT_MODE {
 #include <stdint.h>
 #include <stdbool.h>
 #include "rgblight_drivers.h"
+#ifndef NULLPTR_BINDGEN
 #include "progmem.h"
+#endif
 #include "eeconfig.h"
 #include "color.h"
 

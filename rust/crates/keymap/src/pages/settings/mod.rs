@@ -40,7 +40,7 @@ impl Page for SettingsPage {
 
         renderer
             .framebuffer
-            .draw_text_centered(8, "Settings", false);
+            .draw_text_centered(32, 8, "Settings", false);
 
         None
     }

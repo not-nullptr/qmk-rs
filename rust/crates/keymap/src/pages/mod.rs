@@ -1,19 +1,21 @@
+mod colour;
 mod components;
+mod debug;
 mod hello_world;
 mod home;
-mod rgb;
 mod settings;
 mod transition;
 
+pub use colour::*;
+pub use debug::*;
 pub use hello_world::*;
 pub use home::*;
-pub use rgb::*;
 pub use settings::*;
 pub use transition::*;
 
 #[macro_export]
 macro_rules! define_options {
-    ($($name:expr => $fun:expr; $fn_ident:ident),*) => {
+    ($($name:expr => $fun:expr; $fn_ident:ident),*$(,)?) => {
         #[allow(dead_code)]
         const OPTION_TEXT: &[&str] = &[$($name),*];
         type CreatePage = fn() -> ::alloc::boxed::Box<dyn crate::page::Page>;

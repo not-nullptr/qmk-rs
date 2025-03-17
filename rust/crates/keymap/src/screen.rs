@@ -5,10 +5,12 @@ use core::{
 
 use crate::{
     page::RenderInfo,
-    pages::{DitherTransition, SlideTransition, TRANSITION_TYPE, TransitionHandler},
+    pages::{
+        DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE, TransitionHandler,
+    },
     state::{INPUT_HANDLER, PAGE},
 };
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
 use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Screen};
 
@@ -23,16 +25,17 @@ fn oled_task_user() -> bool {
     }
     let tick = TICK.load(Ordering::SeqCst);
     TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
-    // we need to use a critical section here because the framebuffer
-    // is not actually owned by us -- it's owned by the C code and
-    // we need to make sure that they GO AWAY while we're using it
-    with(|cs| {
+    let actions = with(|cs| {
         let mut framebuffer = Framebuffer::new();
-        draw_screen(&mut framebuffer, cs);
+        let actions = draw_screen(&mut framebuffer, cs);
         draw_border(&mut framebuffer);
         framebuffer.render();
-        false
-    })
+        actions
+    });
+    for action in actions {
+        action();
+    }
+    false
 }
 
 fn draw_border(framebuffer: &mut Framebuffer) {
@@ -93,14 +96,16 @@ fn draw_border(framebuffer: &mut Framebuffer) {
     }
 }
 
-fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) {
+fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dyn FnOnce()>> {
     let tick = TICK.load(Ordering::SeqCst);
     let mut input = INPUT_HANDLER.borrow_ref_mut(cs);
+    let mut actions = vec![];
     let mut info = RenderInfo {
         framebuffer,
         cs,
         tick,
         input: &mut *input,
+        actions: &mut actions,
     };
     let mut transitioning = TRANSITION.borrow_ref_mut(cs);
     if let Some(mut transition) = transitioning.take() {
@@ -111,11 +116,11 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) {
             drop(page);
             drop(input);
             drop(transitioning);
-            draw_screen(framebuffer, cs);
+            actions.extend(draw_screen(framebuffer, cs));
         } else {
             *transitioning = Some(transition);
         }
-        return;
+        return actions;
     }
 
     let mut page = PAGE.borrow_ref_mut(cs);
@@ -124,10 +129,14 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) {
         drop(input);
         *transitioning = match TRANSITION_TYPE.load(Ordering::SeqCst) {
             0 => Some(Box::new(DitherTransition::new(new_page))),
-            1 => Some(Box::new(SlideTransition::new(new_page))),
+            1 => Some(Box::new(ScaleTransition::new(new_page))),
+            2 => Some(Box::new(SlideTransition::new(new_page))),
             _ => Some(Box::new(DitherTransition::new(new_page))),
         };
         drop(transitioning);
-        draw_screen(framebuffer, cs);
+        actions.extend(draw_screen(framebuffer, cs));
+        return actions;
     }
+
+    actions
 }

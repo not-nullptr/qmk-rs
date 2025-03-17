@@ -1,5 +1,5 @@
 use super::{
-    HelloWorldPage, RgbPage, SettingsPage,
+    ColourPage, DebugPage, HelloWorldPage, SettingsPage,
     components::{ListConfig, SelectableList},
 };
 use crate::{
@@ -10,8 +10,9 @@ use alloc::boxed::Box;
 
 define_options! {
     "Spring" => HelloWorldPage::default; hello_world,
-    "Colour" => RgbPage::default; colour,
-    "Settings" => SettingsPage::default; settings
+    "Colour" => ColourPage::default; colour,
+    "Settings" => SettingsPage::default; settings,
+    "Debug" => DebugPage::default; debug,
 }
 
 pub struct HomePage {
@@ -32,7 +33,9 @@ impl Page for HomePage {
         if let Some(index) = self.list.render(renderer, OPTION_TEXT, &events) {
             return Some(OPTION_CONSTRUCTORS[index]());
         }
-        renderer.framebuffer.draw_text_centered(8, "Home", false);
+        renderer
+            .framebuffer
+            .draw_text_centered(32, 8, "Home", false);
         None
     }
 }

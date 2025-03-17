@@ -1,12 +1,14 @@
 mod dither;
 mod drop;
-
-use core::{cell::RefCell, sync::atomic::AtomicU8};
+mod scale;
 
 use crate::page::{Page, RenderInfo};
 use alloc::boxed::Box;
+use core::{cell::RefCell, sync::atomic::AtomicU8};
+
 pub use dither::*;
 pub use drop::*;
+pub use scale::*;
 
 pub static TRANSITION_TYPE: AtomicU8 = AtomicU8::new(0);
 

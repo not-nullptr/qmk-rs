@@ -83,7 +83,6 @@ tags
 *.gif
 *.jpg
 *.jpeg
-*.png
 *.apng
 *.mng
 *.svg
@@ -94,6 +93,9 @@ tags
 *.mpeg
 *.ttf
 *.otf
+
+*.png
+!rust/images/*.png
 
 # Things Travis sees
 /.vs

@@ -21,7 +21,7 @@ impl TransitionHandler for SlideTransition {
 
     fn render(&mut self, renderer: &mut RenderInfo) -> bool {
         let mut from_framebuffer = Framebuffer::new();
-        if self.progress >= 15 {
+        if self.progress >= 20 {
             return true;
         }
         // consume all input events while transitioning

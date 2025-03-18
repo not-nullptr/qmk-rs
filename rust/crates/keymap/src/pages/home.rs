@@ -3,16 +3,16 @@ use super::{
     components::{ListConfig, SelectableList},
 };
 use crate::{
-    define_options,
+    call_option, define_options,
     page::{Page, RenderInfo},
 };
 use alloc::boxed::Box;
 
 define_options! {
-    "Spring" => HelloWorldPage::default; hello_world,
-    "Colour" => ColourPage::default; colour,
-    "Settings" => SettingsPage::default; settings,
-    "Debug" => DebugPage::default; debug,
+    "Spring" => |_| Some(HelloWorldPage::default()),
+    "Colour" => |_| Some(ColourPage::default()),
+    "Settings" => |_| Some(SettingsPage::default()),
+    "Debug" => |_| Some(DebugPage::default()),
 }
 
 pub struct HomePage {
@@ -30,8 +30,8 @@ impl Default for HomePage {
 impl Page for HomePage {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
         let events = renderer.input.collect();
-        if let Some(index) = self.list.render(renderer, OPTION_TEXT, &events) {
-            return Some(OPTION_CONSTRUCTORS[index]());
+        if let Some(index) = self.list.render(renderer, LIST_STRINGS, &events) {
+            call_option!(index, renderer.actions, LIST_CONSTRUCTORS);
         }
         renderer
             .framebuffer

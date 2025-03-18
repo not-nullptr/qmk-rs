@@ -5,15 +5,15 @@ use super::{
     components::{ListConfig, SelectableList},
 };
 use crate::{
-    define_options,
+    call_option, define_options,
     page::{Page, RenderInfo},
 };
 use alloc::boxed::Box;
 use transition::TransitionSettingsPage;
 
 define_options! {
-    "Back" => HomePage::default; home,
-    "Anims" => TransitionSettingsPage::default; transition
+    "Back" => |_| Some(HomePage::default()),
+    "Anims" => |_| Some(TransitionSettingsPage::default()),
 }
 
 pub struct SettingsPage {
@@ -32,8 +32,8 @@ impl Page for SettingsPage {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
         let events = renderer.input.collect();
 
-        if let Some(index) = self.list.render(renderer, OPTION_TEXT, &events) {
-            return Some(OPTION_CONSTRUCTORS[index]());
+        if let Some(index) = self.list.render(renderer, LIST_STRINGS, &events) {
+            call_option!(index, renderer.actions, LIST_CONSTRUCTORS);
         }
 
         renderer

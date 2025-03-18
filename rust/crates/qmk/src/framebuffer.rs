@@ -1,7 +1,7 @@
 use crate::screen::Screen;
 use alloc::string::String;
 use core::mem::transmute;
-use fixed::{FixedI16, types::extra::U6};
+use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
 #[allow(unused_imports)]
 use micromath::F32Ext;
@@ -290,7 +290,6 @@ impl Framebuffer {
         }
     }
 
-    // nearest neighbour interpolation
     pub fn scale_around<T, U, V, W>(&mut self, x: T, y: U, width: V, height: W)
     where
         T: Num + ToPrimitive,
@@ -303,7 +302,7 @@ impl Framebuffer {
         let new_height = height.to_i32().unwrap_or(0);
         let cloned_fb = Framebuffer::from_array(self.framebuffer.clone());
 
-        type Decimal = FixedI16<U6>;
+        type Decimal = FixedI16<U7>;
         const ZERO: Decimal = Decimal::lit("0.0");
         const ONE: Decimal = Decimal::lit("1.0");
 

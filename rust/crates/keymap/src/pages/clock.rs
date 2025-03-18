@@ -4,14 +4,15 @@ use core::fmt::Write;
 use core::sync::atomic::Ordering;
 use core::{cell::RefCell, sync::atomic::AtomicU32};
 use critical_section::{Mutex, with};
+use qmk::keyboard::Keyboard;
 use qmk::qmk_callback;
 use qmk::screen::Screen;
 
 static TIME: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(None));
 static LEVEL: AtomicU32 = AtomicU32::new(0);
 
-#[qmk_callback((uint8_t*, uint8_t) -> void)]
-fn raw_hid_receive(data: *const u8, len: u8) {
+#[unsafe(no_mangle)]
+pub extern "C" fn on_usb_slave_data(data: *const u8, len: u8) {
     let data = unsafe { core::slice::from_raw_parts(data, len as usize) };
     if !data.starts_with(&[0xFF, 0xCC, 0x00, 0xAA]) {
         return;
@@ -36,6 +37,11 @@ fn raw_hid_receive(data: *const u8, len: u8) {
         *time_ref = Some(time);
         LEVEL.store(level, Ordering::SeqCst);
     });
+}
+
+#[qmk_callback((uint8_t*, uint8_t) -> void)]
+fn raw_hid_receive(data: *const u8, len: u8) {
+    Keyboard::send_slave(data, len);
 }
 
 pub fn format_dd_mm_ss(unix_timestamp: i64) -> String {

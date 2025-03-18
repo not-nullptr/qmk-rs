@@ -6,7 +6,7 @@
 #define OLED_DISPLAY_64X128
 #define OLED_FONT_H "keyboards/sofle/keymaps/nulls_keymap/glcdfont.c"
 
-#define SPLIT_TRANSACTION_IDS_USER ONE
+#define SPLIT_TRANSACTION_IDS_USER HID_SYNC
 
 #define RGBLIGHT_ENABLE
 

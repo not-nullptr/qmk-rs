@@ -1,6 +1,6 @@
 use super::HomePage;
 use crate::{
-    image::{COLOUR_GRADIENT, LEFT_ARROW, RIGHT_ARROW, UP_ARROW},
+    image::{COLOUR_GRADIENT, LEFT_ARROW, RIGHT_ARROW},
     page::{Page, RenderInfo},
     state::InputEvent,
 };

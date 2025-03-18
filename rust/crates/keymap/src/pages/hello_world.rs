@@ -4,7 +4,7 @@ use crate::{
     state::InputEvent,
 };
 use alloc::boxed::Box;
-use qmk::{rgb::RGBLight, screen::Screen};
+use qmk::screen::Screen;
 
 use super::HomePage;
 

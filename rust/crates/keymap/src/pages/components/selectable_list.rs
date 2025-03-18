@@ -1,8 +1,8 @@
 use crate::{
-    page::{Page, RenderInfo},
+    page::RenderInfo,
     state::InputEvent,
 };
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 use qmk::screen::Screen;
 
 pub struct ListConfig {

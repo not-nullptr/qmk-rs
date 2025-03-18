@@ -2,7 +2,7 @@
 #![no_builtins]
 #![crate_type = "staticlib"]
 
-use qmk::{keyboard::Keyboard, qmk_callback, rgb::RGBLight};
+use qmk::{qmk_callback, rgb::RGBLight};
 
 extern crate alloc;
 extern crate core;

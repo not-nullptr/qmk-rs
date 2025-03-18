@@ -1,14 +1,8 @@
 use crate::screen::Screen;
 use alloc::string::String;
 use core::mem::transmute;
-use fixed::{
-    FixedI16,
-    types::{
-        I8F8, I12F4,
-        extra::{U4, U5, U6, U7, U8},
-    },
-};
-use include_image::{QmkImage, include_image};
+use fixed::{FixedI16, types::extra::U6};
+use include_image::QmkImage;
 #[allow(unused_imports)]
 use micromath::F32Ext;
 use num_traits::{Num, ToPrimitive};

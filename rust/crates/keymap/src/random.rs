@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use core::sync::atomic::{AtomicU32, Ordering};
 
 static RANDOM: AtomicU32 = AtomicU32::new(0xDEADBEEF);

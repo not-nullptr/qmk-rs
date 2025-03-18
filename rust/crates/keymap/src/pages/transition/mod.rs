@@ -4,7 +4,7 @@ mod scale;
 
 use crate::page::{Page, RenderInfo};
 use alloc::boxed::Box;
-use core::{cell::RefCell, sync::atomic::AtomicU8};
+use core::sync::atomic::AtomicU8;
 
 pub use dither::*;
 pub use drop::*;

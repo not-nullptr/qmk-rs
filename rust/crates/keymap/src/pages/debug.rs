@@ -3,7 +3,7 @@ use crate::{
     page::{Page, RenderInfo},
     state::InputEvent,
 };
-use alloc::{boxed::Box, format, string::ToString};
+use alloc::{boxed::Box, string::ToString};
 
 pub struct DebugPage {
     width: u8,
@@ -48,8 +48,6 @@ impl Page for DebugPage {
                         }
                     }
                 }
-
-                _ => {}
             }
         }
 

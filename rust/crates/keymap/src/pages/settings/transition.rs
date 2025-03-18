@@ -3,7 +3,7 @@ use crate::{
     page::{Page, RenderInfo},
     pages::{TRANSITION_TYPE, components::SelectableList},
 };
-use alloc::{boxed::Box, format, vec::Vec};
+use alloc::boxed::Box;
 use core::sync::atomic::Ordering;
 
 pub struct TransitionSettingsPage {

@@ -7,10 +7,8 @@ use super::{
 use crate::{
     define_options,
     page::{Page, RenderInfo},
-    state::InputEvent,
 };
 use alloc::boxed::Box;
-use qmk::screen::Screen;
 use transition::TransitionSettingsPage;
 
 define_options! {

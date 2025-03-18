@@ -1,4 +1,4 @@
-use alloc::{format, string::String};
+use alloc::string::String;
 
 #[macro_export]
 macro_rules! qmk_log {

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::page::Page;
 use crate::pages::HomePage;
 use alloc::vec;

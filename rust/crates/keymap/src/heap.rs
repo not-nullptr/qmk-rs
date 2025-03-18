@@ -1,5 +1,5 @@
 use embedded_alloc::LlffHeap;
-use qmk::{qmk_callback, rgb::RGBLight};
+use qmk::qmk_callback;
 use rp2040_hal as _;
 use rp2040_panic_usb_boot as _;
 
@@ -16,9 +16,4 @@ fn keyboard_pre_init_user() {
         #[allow(static_mut_refs)]
         HEAP.init(HEAP_MEM.as_mut_ptr() as usize, HEAP_SIZE);
     };
-}
-
-#[qmk_callback(() -> void)]
-fn keyboard_post_init_user() {
-    RGBLight::set_hsv(0, 0, 0);
 }

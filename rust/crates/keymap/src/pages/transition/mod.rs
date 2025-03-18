@@ -10,7 +10,7 @@ pub use dither::*;
 pub use drop::*;
 pub use scale::*;
 
-pub static TRANSITION_TYPE: AtomicU8 = AtomicU8::new(0);
+pub static TRANSITION_TYPE: AtomicU8 = AtomicU8::new(1);
 
 pub trait TransitionHandler: Send + Sync {
     fn new(to: Box<dyn Page>) -> Self

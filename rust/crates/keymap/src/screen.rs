@@ -4,9 +4,10 @@ use core::{
 };
 
 use crate::{
-    page::RenderInfo,
+    page::{Page as _, RenderInfo},
     pages::{
-        DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE, TransitionHandler,
+        ClockPage, DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE,
+        TransitionHandler,
     },
     state::{INPUT_HANDLER, PAGE},
 };
@@ -17,12 +18,20 @@ use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Sc
 pub static TICK: AtomicU32 = AtomicU32::new(0);
 static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
     Mutex::new(RefCell::new(None));
+static RIGHT_HAND_PAGE: Mutex<RefCell<Option<ClockPage>>> = Mutex::new(RefCell::new(None));
 
 #[qmk_callback(() -> bool)]
 fn oled_task_user() -> bool {
     if Keyboard::is_right() {
-        return false;
+        render_right();
+    } else {
+        render_left();
     }
+
+    false
+}
+
+fn render_left() {
     let tick = TICK.load(Ordering::SeqCst);
     TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
     let actions = with(|cs| {
@@ -35,7 +44,39 @@ fn oled_task_user() -> bool {
     for action in actions {
         action();
     }
-    false
+}
+
+fn render_right() {
+    with(|cs| {
+        if RIGHT_HAND_PAGE.borrow_ref(cs).is_none() {
+            let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
+            *page = Some(ClockPage);
+        }
+        let mut framebuffer = Framebuffer::new();
+        let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
+        if let Some(ref mut page) = *page {
+            let mut actions = vec![];
+            page.render(&mut RenderInfo {
+                framebuffer: &mut framebuffer,
+                cs,
+                tick: TICK.load(Ordering::SeqCst),
+                input: &mut INPUT_HANDLER.borrow_ref_mut(cs),
+                actions: &mut actions,
+            });
+            for action in actions {
+                action();
+            }
+        }
+
+        TICK.store(
+            TICK.load(Ordering::SeqCst).wrapping_add(1),
+            Ordering::SeqCst,
+        );
+
+        draw_border(&mut framebuffer);
+
+        framebuffer.render();
+    });
 }
 
 fn draw_border(framebuffer: &mut Framebuffer) {

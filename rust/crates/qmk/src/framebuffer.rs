@@ -5,7 +5,7 @@ use fixed::{
     FixedI16,
     types::{
         I8F8, I12F4,
-        extra::{U4, U6, U7, U8},
+        extra::{U4, U5, U6, U7, U8},
     },
 };
 use include_image::{QmkImage, include_image};
@@ -424,13 +424,17 @@ impl Framebuffer {
         }
     }
 
-    pub fn fill_rect<X, Y>(&mut self, x: X, y: Y, width: u8, height: u8)
+    pub fn fill_rect<X, Y, W, H>(&mut self, x: X, y: Y, width: W, height: H)
     where
         X: Num + ToPrimitive,
         Y: Num + ToPrimitive,
+        W: Num + ToPrimitive,
+        H: Num + ToPrimitive,
     {
         let x = x.to_i16().unwrap_or(255);
         let y = y.to_i16().unwrap_or(255);
+        let width = width.to_u8().unwrap_or(255);
+        let height = height.to_u8().unwrap_or(255);
 
         for i in 0..width {
             for j in 0..height {

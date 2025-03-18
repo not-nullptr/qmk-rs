@@ -1,3 +1,4 @@
+mod clock;
 mod colour;
 mod components;
 mod debug;
@@ -6,6 +7,7 @@ mod home;
 mod settings;
 mod transition;
 
+pub use clock::*;
 pub use colour::*;
 pub use debug::*;
 pub use hello_world::*;

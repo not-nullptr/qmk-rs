@@ -241,6 +241,7 @@ void rgblight_unblink_all_but_layer(uint8_t layer);
 
 #endif
 
+#ifndef NULLPTR_BINDGEN
 extern const uint8_t  RGBLED_BREATHING_INTERVALS[4] PROGMEM;
 extern const uint8_t  RGBLED_RAINBOW_MOOD_INTERVALS[3] PROGMEM;
 extern const uint8_t  RGBLED_RAINBOW_SWIRL_INTERVALS[3] PROGMEM;
@@ -249,6 +250,7 @@ extern const uint8_t  RGBLED_KNIGHT_INTERVALS[3] PROGMEM;
 extern const uint16_t RGBLED_RGBTEST_INTERVALS[1] PROGMEM;
 extern const uint8_t  RGBLED_TWINKLE_INTERVALS[3] PROGMEM;
 extern bool           is_rgblight_initialized;
+#endif
 
 typedef union {
     uint64_t raw;

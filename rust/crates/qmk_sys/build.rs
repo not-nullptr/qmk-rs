@@ -8,6 +8,7 @@ const HEADER_PATHS: &[&str] = &[
     "../../../drivers/oled/oled_driver.h",
     "../../../quantum/logging/sendchar.h",
     "../../../quantum/rgblight/rgblight.h",
+    "../../../quantum/split_common/transactions.h",
 ];
 
 fn main() {
@@ -46,6 +47,7 @@ fn main() {
         .clang_arg("-D MATRIX_COLS=7")
         .clang_arg("-D RGB_MATRIX_LED_COUNT=35")
         .clang_arg("-D EEPROM_TEST_HARNESS")
+        .clang_arg("-D ENCODER_A_PINS={}")
         .formatter(Formatter::Rustfmt)
         .rustified_enum(".*")
         .constified_enum_module(".*")

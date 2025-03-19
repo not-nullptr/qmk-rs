@@ -1,20 +1,13 @@
 use super::{Actions, BootPage, HomePage, components::SelectableList};
 use crate::{
-    call_option,
-    config::SETTINGS,
-    define_options,
+    call_option, define_options,
     page::{Page, RenderInfo},
 };
-use alloc::{boxed::Box, format};
-use critical_section::with;
-use qmk::qmk_log;
+use alloc::boxed::Box;
 
 define_options! {
     "Back", back => |_| Some(HomePage::default()),
     "USB Boot", boot => |_| Some(BootPage::default()),
-    "EEPROM", eeprom => |actions: &mut Actions| {
-        None::<DebugPage>
-    },
 }
 
 pub struct DebugPage {

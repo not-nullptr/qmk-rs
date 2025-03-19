@@ -4,7 +4,6 @@ use core::{
 };
 
 use crate::{
-    config::SETTINGS,
     page::{Page as _, RenderInfo},
     pages::{
         ClockPage, DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE,
@@ -12,9 +11,9 @@ use crate::{
     },
     state::{INPUT_HANDLER, PAGE},
 };
-use alloc::{boxed::Box, format, vec::Vec};
+use alloc::{boxed::Box, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
-use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, qmk_log, screen::Screen};
+use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Screen};
 
 pub static TICK: AtomicU32 = AtomicU32::new(0);
 pub static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =

@@ -3,7 +3,7 @@ use core::sync::atomic::Ordering;
 use crate::{
     image::WHY,
     page::{Page, RenderInfo},
-    screen::{IS_TRANSITIONING, TRANSITION},
+    screen::IS_TRANSITIONING,
 };
 use alloc::boxed::Box;
 use rp2040_hal::rom_data::reset_to_usb_boot;

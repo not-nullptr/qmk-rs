@@ -31,21 +31,23 @@ impl TransitionHandler for ScaleTransition {
     }
 
     fn render(&mut self, renderer: &mut RenderInfo) -> bool {
-        if self.progress == 7 {
+        if self.progress == 9 {
             return true;
         }
 
         while let Some(_) = renderer.input.poll() {}
 
-        let mut from = PAGE.borrow_ref_mut(renderer.cs);
-        from.render(renderer);
-        drop(from);
+        if self.progress < 7 {
+            let mut from = PAGE.borrow_ref_mut(renderer.cs);
+            from.render(renderer);
+            drop(from);
 
-        let width = Screen::OLED_DISPLAY_WIDTH as f32
-            * ease_out_expo_extreme((7 - self.progress) as f32 / 9.0);
-        let height = Screen::OLED_DISPLAY_HEIGHT as f32
-            * ease_out_expo_extreme((7 - self.progress) as f32 / 9.0);
-        renderer.framebuffer.scale_around(32, 64, width, height);
+            let width = Screen::OLED_DISPLAY_WIDTH as f32
+                * ease_out_expo_extreme((7 - self.progress) as f32 / 9.0);
+            let height = Screen::OLED_DISPLAY_HEIGHT as f32
+                * ease_out_expo_extreme((7 - self.progress) as f32 / 9.0);
+            renderer.framebuffer.scale_around(32, 64, width, height);
+        }
 
         if self.progress > 0 {
             let mut to_framebuffer = Framebuffer::new();
@@ -60,17 +62,20 @@ impl TransitionHandler for ScaleTransition {
             self.to.render(&mut to_renderer);
             drop(to_renderer);
 
-            let width = Screen::OLED_DISPLAY_WIDTH as f32
-                * ease_out_expo_extreme(self.progress as f32 / 8.0);
-            let height = Screen::OLED_DISPLAY_HEIGHT as f32
-                * ease_out_expo_extreme(self.progress as f32 / 8.0);
-            to_framebuffer.scale_around(32, 64, width, height);
+            if self.progress < 7 {
+                let width = Screen::OLED_DISPLAY_WIDTH as f32
+                    * ease_out_expo_extreme(self.progress as f32 / 7.0);
+                let height = Screen::OLED_DISPLAY_HEIGHT as f32
+                    * ease_out_expo_extreme(self.progress as f32 / 7.0);
+                to_framebuffer.scale_around(32, 64, width, height);
+            }
+
             for y in 0..Screen::OLED_DISPLAY_HEIGHT {
                 for x in 0..Screen::OLED_DISPLAY_WIDTH {
                     let bayer_x = (x % 4) as usize;
                     let bayer_y = (y % 4) as usize;
                     let bayer_value = BAYER_MATRIX[bayer_y][bayer_x];
-                    let threshold = self.progress * 2;
+                    let threshold = (self.progress * 2) as u8 + 1;
 
                     if bayer_value > threshold {
                         continue;

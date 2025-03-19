@@ -9,10 +9,10 @@ use crate::{
 use alloc::boxed::Box;
 
 define_options! {
-    "Spring" => |_| Some(HelloWorldPage::default()),
-    "Colour" => |_| Some(ColourPage::default()),
-    "Settings" => |_| Some(SettingsPage::default()),
-    "Debug" => |_| Some(DebugPage::default()),
+    "Spring", spring => |_| Some(HelloWorldPage::default()),
+    "Colour", colour => |_| Some(ColourPage::default()),
+    "Settings", settings => |_| Some(SettingsPage::default()),
+    "Debug", debug => |_| Some(DebugPage::default()),
 }
 
 pub struct HomePage {

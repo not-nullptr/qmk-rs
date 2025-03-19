@@ -12,8 +12,8 @@ use alloc::boxed::Box;
 use transition::TransitionSettingsPage;
 
 define_options! {
-    "Back" => |_| Some(HomePage::default()),
-    "Anims" => |_| Some(TransitionSettingsPage::default()),
+    "Back", back => |_| Some(HomePage::default()),
+    "Anims", anims => |_| Some(TransitionSettingsPage::default()),
 }
 
 pub struct SettingsPage {

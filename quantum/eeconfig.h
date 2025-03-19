@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EECONFIG_MAGIC_NUMBER_OFF (uint16_t)0xFFFF
 
 // Dummy struct only used to calculate offsets
+#ifndef NULLPTR_BINDGEN
 typedef struct PACKED {
     uint16_t magic;
     uint8_t  debug;
@@ -50,6 +51,7 @@ typedef struct PACKED {
     uint32_t haptic;
     uint8_t  rgblight_ext;
 } eeprom_core_t;
+#endif
 
 /* EEPROM parameter address */
 #define EECONFIG_MAGIC (uint16_t *)(offsetof(eeprom_core_t, magic))

@@ -1,11 +1,12 @@
 use glob::glob;
+use qmk::EEPROM_BYTES;
 use qmk_callback_parsing::{QmkCallback, Signature};
 use std::fs;
 use syn::parse::Parse;
 
 pub fn write_glue_code(path: impl Into<String>) {
     // re-run if any of the source files change
-    let path = path.into();
+    let path: String = path.into();
     println!("cargo:rerun-if-changed=src/**/*.rs");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed={}", path);
@@ -53,5 +54,21 @@ pub fn write_glue_code(path: impl Into<String>) {
     }
 
     let c_file = attributes.join("\n\n");
-    fs::write(path, c_file).unwrap();
+    fs::write(&path, c_file).unwrap();
+
+    let mut dir = path.split("/").collect::<Vec<_>>();
+    dir.pop();
+    let dir = dir.join("/");
+    let mut config_file = fs::read_to_string(format!("{}/config.h", dir)).unwrap();
+    // find the first line starting with // ### NULLPTR'S STUFF BEGINS HERE -- DO NOT TOUCH! DON'T EVEN MODIFY THIS COMMENT!
+    let line =
+        "\n// ### NULLPTR'S STUFF BEGINS HERE -- DO NOT TOUCH! DON'T EVEN MODIFY THIS COMMENT!";
+    let pos = config_file.find(line);
+    if let Some(pos) = pos {
+        config_file = config_file[..pos].to_string();
+    }
+    config_file += line;
+    config_file += "\n";
+    config_file += &format!("#define EECONFIG_USER_DATA_SIZE {}\n", EEPROM_BYTES);
+    fs::write(format!("{}/config.h", dir), config_file).unwrap();
 }

@@ -1,6 +1,8 @@
 use super::SettingsPage;
 use crate::{
-    call_option, define_options,
+    call_option,
+    config::{PageTransition, SETTINGS},
+    define_options,
     page::{Page, RenderInfo},
     pages::{TRANSITION_TYPE, components::SelectableList},
 };
@@ -13,17 +15,17 @@ pub struct TransitionSettingsPage {
 
 define_options! {
     self => TransitionSettingsPage,
-    "Back" => |_| Some(Box::new(SettingsPage::default())),
-    "Dither" => |_| {
-        TRANSITION_TYPE.store(0, Ordering::SeqCst);
+    "Back", back => |_| Some(Box::new(SettingsPage::default())),
+    "Dither", dither => |_| {
+        TRANSITION_TYPE.store(PageTransition::Dither as u8, Ordering::SeqCst);
         None
     },
-    "Scale" => |_| {
-        TRANSITION_TYPE.store(1, Ordering::SeqCst);
+    "Scale", scale => |_| {
+        TRANSITION_TYPE.store(PageTransition::Scale as u8, Ordering::SeqCst);
         None
     },
-    "Slide" => |_| {
-        TRANSITION_TYPE.store(2, Ordering::SeqCst);
+    "Slide", slide => |_| {
+        TRANSITION_TYPE.store(PageTransition::Slide as u8, Ordering::SeqCst);
         None
     },
 }
@@ -41,6 +43,8 @@ impl Page for TransitionSettingsPage {
         let events = renderer.input.collect();
         if let Some(index) = self.list.render(renderer, LIST_STRINGS, &events) {
             call_option!(index, self, LIST_CONSTRUCTORS);
+            let mut settings = SETTINGS.borrow_ref_mut(renderer.cs);
+            settings.transition = PageTransition::from_u8(TRANSITION_TYPE.load(Ordering::SeqCst));
         }
 
         renderer.framebuffer.draw_text_centered(

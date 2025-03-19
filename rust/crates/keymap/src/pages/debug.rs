@@ -1,59 +1,44 @@
-use super::HomePage;
+use super::{Actions, BootPage, HomePage, components::SelectableList};
 use crate::{
+    call_option,
+    config::SETTINGS,
+    define_options,
     page::{Page, RenderInfo},
-    state::InputEvent,
 };
-use alloc::{boxed::Box, string::ToString};
+use alloc::{boxed::Box, format};
+use critical_section::with;
+use qmk::qmk_log;
+
+define_options! {
+    "Back", back => |_| Some(HomePage::default()),
+    "USB Boot", boot => |_| Some(BootPage::default()),
+    "EEPROM", eeprom => |actions: &mut Actions| {
+        None::<DebugPage>
+    },
+}
 
 pub struct DebugPage {
-    width: u8,
-    height: u8,
+    list: SelectableList,
 }
 
 impl Default for DebugPage {
     fn default() -> Self {
         Self {
-            width: 64,
-            height: 128,
+            list: SelectableList::new(Default::default()),
         }
     }
 }
 
 impl Page for DebugPage {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
-        while let Some(event) = renderer.input.poll() {
-            match event {
-                InputEvent::EncoderClick(i) => {
-                    if i == 0 {
-                        return Some(Box::new(HomePage::default()));
-                    }
-                }
-
-                InputEvent::EncoderScroll(i, clockwise) => {
-                    if i != 0 {
-                        continue;
-                    }
-
-                    if renderer.input.left_encoder_down() {
-                        if clockwise {
-                            self.width = self.width.saturating_add(4);
-                        } else {
-                            self.width = self.width.saturating_sub(4);
-                        }
-                    } else {
-                        if clockwise {
-                            self.height = self.height.saturating_add(4);
-                        } else {
-                            self.height = self.height.saturating_sub(4);
-                        }
-                    }
-                }
-            }
+        let events = renderer.input.collect();
+        if let Some(index) = self.list.render(renderer, LIST_STRINGS, &events) {
+            call_option!(index, renderer.actions, LIST_CONSTRUCTORS);
         }
 
         renderer
             .framebuffer
-            .draw_text_centered(32, 60, renderer.tick.to_string(), false);
+            .draw_text_centered(32, 8, "Debug", false);
 
         None
     }

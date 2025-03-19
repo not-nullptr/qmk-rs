@@ -1,9 +1,10 @@
 use core::{
     cell::RefCell,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::atomic::{AtomicBool, AtomicU32, Ordering},
 };
 
 use crate::{
+    config::SETTINGS,
     page::{Page as _, RenderInfo},
     pages::{
         ClockPage, DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE,
@@ -11,13 +12,14 @@ use crate::{
     },
     state::{INPUT_HANDLER, PAGE},
 };
-use alloc::{boxed::Box, vec, vec::Vec};
+use alloc::{boxed::Box, format, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
-use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Screen};
+use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, qmk_log, screen::Screen};
 
 pub static TICK: AtomicU32 = AtomicU32::new(0);
-static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
+pub static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
     Mutex::new(RefCell::new(None));
+pub static IS_TRANSITIONING: AtomicBool = AtomicBool::new(false);
 static RIGHT_HAND_PAGE: Mutex<RefCell<Option<ClockPage>>> = Mutex::new(RefCell::new(None));
 
 #[qmk_callback(() -> bool)]
@@ -54,8 +56,8 @@ fn render_right() {
         }
         let mut framebuffer = Framebuffer::new();
         let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
+        let mut actions = alloc::vec![];
         if let Some(ref mut page) = *page {
-            let mut actions = vec![];
             page.render(&mut RenderInfo {
                 framebuffer: &mut framebuffer,
                 cs,
@@ -63,9 +65,6 @@ fn render_right() {
                 input: &mut INPUT_HANDLER.borrow_ref_mut(cs),
                 actions: &mut actions,
             });
-            for action in actions {
-                action();
-            }
         }
 
         TICK.store(
@@ -76,6 +75,10 @@ fn render_right() {
         draw_border(&mut framebuffer);
 
         framebuffer.render();
+
+        for action in actions {
+            action();
+        }
     });
 }
 
@@ -140,7 +143,7 @@ fn draw_border(framebuffer: &mut Framebuffer) {
 fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dyn FnOnce()>> {
     let tick = TICK.load(Ordering::SeqCst);
     let mut input = INPUT_HANDLER.borrow_ref_mut(cs);
-    let mut actions = vec![];
+    let mut actions = alloc::vec![];
     let mut info = RenderInfo {
         framebuffer,
         cs,
@@ -148,6 +151,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
         input: &mut *input,
         actions: &mut actions,
     };
+
     let mut transitioning = TRANSITION.borrow_ref_mut(cs);
     if let Some(mut transition) = transitioning.take() {
         if transition.render(&mut info) {
@@ -157,6 +161,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
             drop(page);
             drop(input);
             drop(transitioning);
+            IS_TRANSITIONING.store(false, Ordering::SeqCst);
             actions.extend(draw_screen(framebuffer, cs));
         } else {
             *transitioning = Some(transition);
@@ -165,7 +170,8 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
     }
 
     let mut page = PAGE.borrow_ref_mut(cs);
-    if let Some(new_page) = page.render(&mut info) {
+    if let Some(mut new_page) = page.render(&mut info) {
+        new_page.init(&mut info);
         drop(page);
         drop(input);
         *transitioning = match TRANSITION_TYPE.load(Ordering::SeqCst) {
@@ -174,6 +180,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
             2 => Some(Box::new(SlideTransition::new(new_page))),
             _ => Some(Box::new(DitherTransition::new(new_page))),
         };
+        IS_TRANSITIONING.store(true, Ordering::SeqCst);
         drop(transitioning);
         actions.extend(draw_screen(framebuffer, cs));
         return actions;

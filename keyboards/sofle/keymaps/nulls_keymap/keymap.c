@@ -145,7 +145,7 @@ void hid_sync_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_
   on_usb_slave_data(data, in_buflen);
 }
 
-void keyboard_post_init_user(void) {
+void do_that_stuff_man(void) {
   transaction_register_rpc(HID_SYNC, hid_sync_slave_handler);
 }
 

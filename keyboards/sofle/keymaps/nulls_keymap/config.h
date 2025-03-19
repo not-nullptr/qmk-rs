@@ -5,6 +5,7 @@
 
 #define OLED_DISPLAY_64X128
 #define OLED_FONT_H "keyboards/sofle/keymaps/nulls_keymap/glcdfont.c"
+#define OLED_UPDATE_PROCESS_LIMIT 2
 
 #define SPLIT_TRANSACTION_IDS_USER HID_SYNC
 
@@ -41,3 +42,5 @@
     #define RGBLIGHT_SAT_STEP 17
     #define RGBLIGHT_VAL_STEP 17
 #endif
+// ### NULLPTR'S STUFF BEGINS HERE -- DO NOT TOUCH! DON'T EVEN MODIFY THIS COMMENT!
+#define EECONFIG_USER_DATA_SIZE 4

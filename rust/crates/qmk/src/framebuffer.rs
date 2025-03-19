@@ -103,6 +103,13 @@ pub const CHAR_SIZE: usize = CHAR_WIDTH * CHAR_HEIGHT;
 pub const CHAR_ROWS: usize = FONT_WIDTH / CHAR_WIDTH;
 pub const CHAR_COLS: usize = FONT_HEIGHT / CHAR_HEIGHT;
 
+unsafe extern "C" {
+    static mut oled_buffer: [u8; Screen::OLED_DISPLAY_SIZE];
+    static mut oled_dirty: u16;
+}
+
+const ALL_DIRTY: u16 = (((1 << (16 - 1)) - 1) << 1) | 1;
+
 pub struct FramebufferRetriever {
     pub framebuffer: oled_buffer_reader_t,
 }
@@ -193,9 +200,10 @@ impl Framebuffer {
     }
 
     pub fn render(self) {
-        let framebuffer = FramebufferRetriever::retrieve();
-        for (i, byte) in framebuffer.into_iter().enumerate() {
-            byte.write(self.framebuffer[i]);
+        unsafe {
+            #[allow(static_mut_refs)]
+            core::ptr::write(&raw mut oled_buffer, self.framebuffer);
+            oled_dirty = ALL_DIRTY;
         }
     }
 

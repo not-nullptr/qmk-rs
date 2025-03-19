@@ -9,6 +9,7 @@ const HEADER_PATHS: &[&str] = &[
     "../../../quantum/logging/sendchar.h",
     "../../../quantum/rgblight/rgblight.h",
     "../../../quantum/split_common/transactions.h",
+    "../../../quantum/eeconfig.h",
 ];
 
 fn main() {
@@ -48,6 +49,8 @@ fn main() {
         .clang_arg("-D RGB_MATRIX_LED_COUNT=35")
         .clang_arg("-D EEPROM_TEST_HARNESS")
         .clang_arg("-D ENCODER_A_PINS={}")
+        .clang_arg("-D EECONFIG_USER_DATA_SIZE=8")
+        .clang_arg("-D EECONFIG_KB_DATA_SIZE=8")
         .formatter(Formatter::Rustfmt)
         .rustified_enum(".*")
         .constified_enum_module(".*")

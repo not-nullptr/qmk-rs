@@ -6,9 +6,11 @@ extern crate alloc;
 extern crate core;
 
 mod animation;
+mod config;
 #[cfg(not(test))]
 mod heap;
 mod image;
+mod init;
 mod input;
 mod page;
 mod pages;

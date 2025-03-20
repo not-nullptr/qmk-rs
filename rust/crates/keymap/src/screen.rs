@@ -154,7 +154,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
 
     let mut transitioning = TRANSITION.borrow_ref_mut(cs);
     if let Some(mut transition) = transitioning.take() {
-        if transition.render(&mut info) {
+        if transition.render(&mut info) && !IS_TRANSITIONING.load(Ordering::SeqCst) {
             let new_page = transition.take_page();
             let mut page = PAGE.borrow_ref_mut(cs);
             *page = new_page;

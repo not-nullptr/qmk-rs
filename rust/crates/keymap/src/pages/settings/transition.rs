@@ -49,6 +49,7 @@ impl Page for TransitionSettingsPage {
             call_option!(index, self, LIST_CONSTRUCTORS);
             let mut settings = SETTINGS.borrow_ref_mut(renderer.cs);
             settings.transition = PageTransition::from_u8(TRANSITION_TYPE.load(Ordering::SeqCst));
+            settings.save();
         }
 
         renderer.framebuffer.draw_text_centered(

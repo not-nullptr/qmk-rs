@@ -171,10 +171,6 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
 
     let mut page = PAGE.borrow_ref_mut(cs);
     if let Some(mut new_page) = page.render(&mut info) {
-        if IS_TRANSITIONING.load(Ordering::SeqCst) {
-            return actions;
-        }
-
         new_page.init(&mut info);
         drop(page);
         drop(input);

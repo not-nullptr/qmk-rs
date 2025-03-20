@@ -28,6 +28,10 @@ define_options! {
         TRANSITION_TYPE.store(PageTransition::Slide as u8, Ordering::SeqCst);
         None
     },
+    "Doom", doom => |_| {
+        TRANSITION_TYPE.store(PageTransition::Doom as u8, Ordering::SeqCst);
+        None
+    },
 }
 
 impl Default for TransitionSettingsPage {

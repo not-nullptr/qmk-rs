@@ -1,4 +1,5 @@
 mod dither;
+mod doom;
 mod drop;
 mod scale;
 
@@ -7,6 +8,7 @@ use alloc::boxed::Box;
 use core::sync::atomic::AtomicU8;
 
 pub use dither::*;
+pub use doom::*;
 pub use drop::*;
 pub use scale::*;
 

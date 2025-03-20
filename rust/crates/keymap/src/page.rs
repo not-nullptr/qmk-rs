@@ -6,6 +6,7 @@ use crate::state::InputHandler;
 
 pub trait Page: Send + Sync {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>>;
+    #[allow(unused_variables)]
     fn init(&mut self, renderer: &mut RenderInfo) {}
 }
 

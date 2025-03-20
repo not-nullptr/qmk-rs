@@ -4,10 +4,11 @@ use core::{
 };
 
 use crate::{
+    config::PageTransition,
     page::{Page as _, RenderInfo},
     pages::{
-        ClockPage, DitherTransition, ScaleTransition, SlideTransition, TRANSITION_TYPE,
-        TransitionHandler,
+        ClockPage, DitherTransition, DoomTransition, ScaleTransition, SlideTransition,
+        TRANSITION_TYPE, TransitionHandler,
     },
     state::{INPUT_HANDLER, PAGE},
 };
@@ -173,11 +174,11 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
         new_page.init(&mut info);
         drop(page);
         drop(input);
-        *transitioning = match TRANSITION_TYPE.load(Ordering::SeqCst) {
-            0 => Some(Box::new(DitherTransition::new(new_page))),
-            1 => Some(Box::new(ScaleTransition::new(new_page))),
-            2 => Some(Box::new(SlideTransition::new(new_page))),
-            _ => Some(Box::new(DitherTransition::new(new_page))),
+        *transitioning = match PageTransition::from_u8(TRANSITION_TYPE.load(Ordering::SeqCst)) {
+            PageTransition::Dither => Some(Box::new(DitherTransition::new(new_page))),
+            PageTransition::Scale => Some(Box::new(ScaleTransition::new(new_page))),
+            PageTransition::Slide => Some(Box::new(SlideTransition::new(new_page))),
+            PageTransition::Doom => Some(Box::new(DoomTransition::new(new_page))),
         };
         IS_TRANSITIONING.store(true, Ordering::SeqCst);
         drop(transitioning);

@@ -1,4 +1,4 @@
-use super::{Actions, BootPage, HomePage, components::SelectableList};
+use super::{BootPage, HomePage, components::SelectableList};
 use crate::{
     call_option, define_options,
     page::{Page, RenderInfo},

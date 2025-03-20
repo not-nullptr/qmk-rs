@@ -1,5 +1,5 @@
 use crate::screen::Screen;
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 use core::mem::transmute;
 use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
@@ -481,6 +481,96 @@ impl Framebuffer {
                             self.framebuffer[dest_byte_index] |= 1 << dest_bit;
                         } else {
                             self.framebuffer[dest_byte_index] &= !(1 << dest_bit);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn get_framebuffer_at<T, U, V, W>(&self, x: T, y: U, width: V, height: W) -> Vec<u8>
+    where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+        V: Num + ToPrimitive,
+        W: Num + ToPrimitive,
+    {
+        let x = x.to_u8().unwrap_or(255);
+        let y = y.to_u8().unwrap_or(255);
+        let width = width.to_u8().unwrap_or(255);
+        let height = height.to_u8().unwrap_or(255);
+
+        let x = x as usize;
+        let y = y as usize;
+        let width = width as usize;
+        let height = height as usize;
+
+        let byte_rows = (height + 7) / 8;
+        let mut out = alloc::vec![0u8; width * byte_rows];
+
+        for col in 0..width {
+            for byte_row in 0..byte_rows {
+                let mut byte: u8 = 0;
+                for bit in 0..8 {
+                    let pixel_y = y + byte_row * 8 + bit;
+                    if pixel_y < y + height
+                        && col + x < Screen::OLED_DISPLAY_WIDTH as usize
+                        && pixel_y < Screen::OLED_DISPLAY_HEIGHT as usize
+                    {
+                        let fb_index =
+                            (x + col) + ((pixel_y) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+                        if self.framebuffer[fb_index] & (1 << (pixel_y % 8)) != 0 {
+                            byte |= 1 << bit;
+                        }
+                    }
+                }
+                out[col + byte_row * width] = byte;
+            }
+        }
+        out
+    }
+
+    pub fn draw_framebuffer_at<T, U, V, W>(
+        &mut self,
+        x: T,
+        y: U,
+        width: V,
+        height: W,
+        source: &[u8],
+    ) where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+        V: Num + ToPrimitive,
+        W: Num + ToPrimitive,
+    {
+        let x = x.to_u8().unwrap_or(255);
+        let y = y.to_u8().unwrap_or(255);
+        let width = width.to_u8().unwrap_or(255);
+        let height = height.to_u8().unwrap_or(255);
+
+        let x = x as usize;
+        let y = y as usize;
+        let width = width as usize;
+        let height = height as usize;
+
+        let byte_rows = (height + 7) / 8;
+
+        for col in 0..width {
+            for byte_row in 0..byte_rows {
+                let byte = source[col + byte_row * width];
+                for bit in 0..8 {
+                    let dest_y = y + byte_row * 8 + bit;
+                    let dest_x = x + col;
+                    // Only draw if within the source rectangle and screen bounds.
+                    if dest_y < y + height
+                        && dest_x < Screen::OLED_DISPLAY_WIDTH as usize
+                        && dest_y < Screen::OLED_DISPLAY_HEIGHT as usize
+                    {
+                        let fb_index = dest_x + (dest_y / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+                        if byte & (1 << bit) != 0 {
+                            self.framebuffer[fb_index] |= 1 << (dest_y % 8);
+                        } else {
+                            self.framebuffer[fb_index] &= !(1 << (dest_y % 8));
                         }
                     }
                 }

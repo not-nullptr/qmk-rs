@@ -35,6 +35,7 @@ pub struct UserConfig {
 
 impl UserConfig {
     pub const fn new() -> Self {
+        let _ = EEConfig::<UserConfig>::new();
         Self {
             transition: PageTransition::Dither,
             hsv: [0, 0, 0],
@@ -42,10 +43,12 @@ impl UserConfig {
     }
 
     pub fn load(&mut self) {
-        *self = EEConfig::load();
+        let eeconfig = EEConfig::new();
+        *self = eeconfig.load();
     }
 
     pub fn save(&self) {
-        EEConfig::save(self);
+        let eeconfig = EEConfig::new();
+        eeconfig.save(self);
     }
 }

@@ -172,7 +172,8 @@ impl FramebufferItem {
 
     pub fn write(&self, byte: u8) {
         unsafe {
-            oled_write_raw_byte(transmute::<u8, i8>(byte), self.index);
+            #[allow(clippy::missing_transmute_annotations)]
+            oled_write_raw_byte(transmute(byte), self.index);
         };
     }
 }

@@ -110,7 +110,7 @@ fn is_leap_year(year: i64) -> bool {
 }
 
 fn format_hh_mm_ss(epoch: i64) -> String {
-    let total_seconds = ((epoch % 86400) + 86400) % 86400;
+    let total_seconds = epoch.rem_euclid(86400);
     let hours = total_seconds / 3600;
     let minutes = (total_seconds % 3600) / 60;
     let seconds = total_seconds % 60;

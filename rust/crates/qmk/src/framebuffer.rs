@@ -172,7 +172,7 @@ impl FramebufferItem {
 
     pub fn write(&self, byte: u8) {
         unsafe {
-            oled_write_raw_byte(transmute(byte), self.index);
+            oled_write_raw_byte(transmute::<u8, i8>(byte), self.index);
         };
     }
 }
@@ -183,20 +183,21 @@ pub struct Framebuffer {
     framebuffer: FramebufferArray,
 }
 
-impl Framebuffer {
-    pub fn new() -> Self {
+impl Default for Framebuffer {
+    fn default() -> Self {
         Self {
             framebuffer: [0; Screen::OLED_DISPLAY_SIZE],
         }
     }
+}
 
+impl Framebuffer {
     pub fn from_array(framebuffer: FramebufferArray) -> Self {
         Self { framebuffer }
     }
 
     pub fn take_framebuffer(self) -> FramebufferArray {
-        let framebuffer = self.framebuffer;
-        framebuffer
+        self.framebuffer
     }
 
     pub fn render(self) {
@@ -218,7 +219,7 @@ impl Framebuffer {
             return false;
         }
 
-        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH;
         let bit_position = y % 8;
 
         self.framebuffer[byte_index] & (1 << bit_position) != 0
@@ -235,7 +236,7 @@ impl Framebuffer {
             return;
         }
 
-        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH;
         let bit_position = y % 8;
 
         self.framebuffer[byte_index] |= 1 << bit_position;
@@ -253,7 +254,7 @@ impl Framebuffer {
             return;
         }
 
-        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+        let byte_index = (x as usize) + ((y as usize) / 8) * Screen::OLED_DISPLAY_WIDTH;
         let bit_position = y % 8;
 
         self.framebuffer[byte_index] &= !(1 << bit_position);
@@ -287,12 +288,10 @@ impl Framebuffer {
                     } else {
                         self.draw_pixel(offset_x + cx as u8, offset_y + bit as u8);
                     }
+                } else if font_column & (1 << bit) != 0 {
+                    self.draw_pixel(offset_x + cx as u8, offset_y + bit as u8);
                 } else {
-                    if font_column & (1 << bit) != 0 {
-                        self.draw_pixel(offset_x + cx as u8, offset_y + bit as u8);
-                    } else {
-                        self.clear_pixel(offset_x + cx as u8, offset_y + bit as u8);
-                    }
+                    self.clear_pixel(offset_x + cx as u8, offset_y + bit as u8);
                 }
             }
         }
@@ -308,7 +307,7 @@ impl Framebuffer {
         let center = (x.to_i32().unwrap_or(0), y.to_i32().unwrap_or(0));
         let new_width = width.to_i32().unwrap_or(0);
         let new_height = height.to_i32().unwrap_or(0);
-        let cloned_fb = Framebuffer::from_array(self.framebuffer.clone());
+        let cloned_fb = Framebuffer::from_array(self.framebuffer);
 
         type Decimal = FixedI16<U7>;
         const ZERO: Decimal = Decimal::lit("0.0");
@@ -399,8 +398,8 @@ impl Framebuffer {
         let x1 = x1.to_i16().unwrap_or(255);
         let y1 = y1.to_i16().unwrap_or(255);
 
-        let (mut x0, mut y0) = (x0 as i16, y0 as i16);
-        let (x1, y1) = (x1 as i16, y1 as i16);
+        let (mut x0, mut y0) = (x0, y0);
+        let (x1, y1) = (x1, y1);
 
         let dx = (x1 - x0).abs();
         let dy = (y1 - y0).abs();
@@ -462,7 +461,7 @@ impl Framebuffer {
         let offset_x = x.to_u8().unwrap_or(255);
         let offset_y = y.to_u8().unwrap_or(255);
 
-        let src_width = Screen::OLED_DISPLAY_WIDTH as usize;
+        let src_width = Screen::OLED_DISPLAY_WIDTH;
         let num_byte_rows = framebuffer.len() / src_width;
 
         for src_x in 0..src_width {
@@ -471,11 +470,11 @@ impl Framebuffer {
                 for bit in 0..8 {
                     let dest_pixel_x = offset_x as usize + src_x;
                     let dest_pixel_y = offset_y as usize + (byte_row * 8) + bit;
-                    if dest_pixel_x < Screen::OLED_DISPLAY_WIDTH as usize
-                        && dest_pixel_y < Screen::OLED_DISPLAY_HEIGHT as usize
+                    if dest_pixel_x < Screen::OLED_DISPLAY_WIDTH
+                        && dest_pixel_y < Screen::OLED_DISPLAY_HEIGHT
                     {
                         let dest_byte_index =
-                            dest_pixel_x + (dest_pixel_y / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+                            dest_pixel_x + (dest_pixel_y / 8) * Screen::OLED_DISPLAY_WIDTH;
                         let dest_bit = dest_pixel_y % 8;
                         if byte & (1 << bit) != 0 {
                             self.framebuffer[dest_byte_index] |= 1 << dest_bit;
@@ -514,11 +513,10 @@ impl Framebuffer {
                 for bit in 0..8 {
                     let pixel_y = y + byte_row * 8 + bit;
                     if pixel_y < y + height
-                        && col + x < Screen::OLED_DISPLAY_WIDTH as usize
-                        && pixel_y < Screen::OLED_DISPLAY_HEIGHT as usize
+                        && col + x < Screen::OLED_DISPLAY_WIDTH
+                        && pixel_y < Screen::OLED_DISPLAY_HEIGHT
                     {
-                        let fb_index =
-                            (x + col) + ((pixel_y) / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+                        let fb_index = (x + col) + ((pixel_y) / 8) * Screen::OLED_DISPLAY_WIDTH;
                         if self.framebuffer[fb_index] & (1 << (pixel_y % 8)) != 0 {
                             byte |= 1 << bit;
                         }
@@ -563,10 +561,10 @@ impl Framebuffer {
                     let dest_x = x + col;
                     // Only draw if within the source rectangle and screen bounds.
                     if dest_y < y + height
-                        && dest_x < Screen::OLED_DISPLAY_WIDTH as usize
-                        && dest_y < Screen::OLED_DISPLAY_HEIGHT as usize
+                        && dest_x < Screen::OLED_DISPLAY_WIDTH
+                        && dest_y < Screen::OLED_DISPLAY_HEIGHT
                     {
-                        let fb_index = dest_x + (dest_y / 8) * Screen::OLED_DISPLAY_WIDTH as usize;
+                        let fb_index = dest_x + (dest_y / 8) * Screen::OLED_DISPLAY_WIDTH;
                         if byte & (1 << bit) != 0 {
                             self.framebuffer[fb_index] |= 1 << (dest_y % 8);
                         } else {
@@ -591,7 +589,7 @@ impl Framebuffer {
         let offset_y = offset_y.to_u8().unwrap_or(255);
 
         let img_pages = (image.height as usize + 7) / 8;
-        let display_width = Screen::OLED_DISPLAY_WIDTH as usize;
+        let display_width = Screen::OLED_DISPLAY_WIDTH;
 
         for x in 0..image.width as usize {
             for y in 0..image.height as usize {

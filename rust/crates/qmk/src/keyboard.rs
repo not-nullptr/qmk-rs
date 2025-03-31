@@ -12,13 +12,14 @@ impl Keyboard {
     }
 
     pub fn send_slave(data: *const u8, len: u8) -> bool {
-        unsafe extern "C" {
-            fn send_to_slave(data: *const u8, len: u8) -> bool;
-        }
-        // unsafe {
-        //     qmk_sys::transaction_rpc_exec(id, len, data as *mut c_void, 0, core::ptr::null_mut())
-        // }
-
-        unsafe { send_to_slave(data, len) }
+        send_to_slave_wrapper(data, len)
     }
+}
+
+fn send_to_slave_wrapper(data: *const u8, len: u8) -> bool {
+    unsafe extern "C" {
+        fn send_to_slave(data: *const u8, len: u8) -> bool;
+    }
+
+    unsafe { send_to_slave(data, len) }
 }

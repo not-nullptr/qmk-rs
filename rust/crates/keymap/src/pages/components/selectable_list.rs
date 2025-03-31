@@ -1,7 +1,4 @@
-use crate::{
-    page::RenderInfo,
-    state::InputEvent,
-};
+use crate::{page::RenderInfo, state::InputEvent};
 use alloc::vec::Vec;
 use qmk::screen::Screen;
 
@@ -30,7 +27,7 @@ pub struct SelectableList {
     config: ListConfig,
 }
 
-impl<'a> SelectableList {
+impl SelectableList {
     pub fn new(config: ListConfig) -> Self {
         Self {
             config,

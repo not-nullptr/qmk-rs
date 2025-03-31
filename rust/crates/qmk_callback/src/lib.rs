@@ -26,13 +26,10 @@ pub fn write_glue_code(path: impl Into<String>) {
             .filter_map(|item| {
                 if let syn::Item::Fn(func) = item {
                     let name = func.sig.ident.to_string();
-                    let Some(attr) = func
+                    let attr = func
                         .attrs
                         .into_iter()
-                        .find(|attr| attr.path().is_ident("qmk_callback"))
-                    else {
-                        return None;
-                    };
+                        .find(|attr| attr.path().is_ident("qmk_callback"))?;
 
                     Some((attr, name))
                 } else {

@@ -35,7 +35,7 @@ impl TransitionHandler for ScaleTransition {
             return true;
         }
 
-        while let Some(_) = renderer.input.poll() {}
+        while renderer.input.poll().is_some() {}
 
         if self.progress < 7 {
             let mut from = PAGE.borrow_ref_mut(renderer.cs);
@@ -50,7 +50,7 @@ impl TransitionHandler for ScaleTransition {
         }
 
         if self.progress > 0 {
-            let mut to_framebuffer = Framebuffer::new();
+            let mut to_framebuffer = Framebuffer::default();
             let mut to_renderer = RenderInfo {
                 cs: renderer.cs,
                 framebuffer: &mut to_framebuffer,
@@ -60,7 +60,6 @@ impl TransitionHandler for ScaleTransition {
             };
 
             self.to.render(&mut to_renderer);
-            drop(to_renderer);
 
             if self.progress < 7 {
                 let width = Screen::OLED_DISPLAY_WIDTH as f32
@@ -72,10 +71,10 @@ impl TransitionHandler for ScaleTransition {
 
             for y in 0..Screen::OLED_DISPLAY_HEIGHT {
                 for x in 0..Screen::OLED_DISPLAY_WIDTH {
-                    let bayer_x = (x % 4) as usize;
-                    let bayer_y = (y % 4) as usize;
+                    let bayer_x = x % 4;
+                    let bayer_y = y % 4;
                     let bayer_value = BAYER_MATRIX[bayer_y][bayer_x];
-                    let threshold = (self.progress * 2) as u8 + 1;
+                    let threshold = (self.progress * 2) + 1;
 
                     if bayer_value > threshold {
                         continue;

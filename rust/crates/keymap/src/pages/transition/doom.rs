@@ -70,7 +70,7 @@ impl DoomRNG {
 
     fn random(&mut self) -> u8 {
         self.rng_index = (self.rng_index + 1) & 0xFF;
-        return Self::RNG_TABLE[self.rng_index];
+        Self::RNG_TABLE[self.rng_index]
     }
 }
 
@@ -104,7 +104,7 @@ impl TransitionHandler for DoomTransition {
 
     fn render(&mut self, renderer: &mut crate::page::RenderInfo) -> bool {
         let mut from = PAGE.borrow_ref_mut(renderer.cs);
-        let mut from_framebuffer = Framebuffer::new();
+        let mut from_framebuffer = Framebuffer::default();
         let mut from_renderer = crate::page::RenderInfo {
             framebuffer: &mut from_framebuffer,
             cs: renderer.cs,
@@ -114,14 +114,13 @@ impl TransitionHandler for DoomTransition {
         };
         from.render(&mut from_renderer);
         drop(from);
-        drop(from_renderer);
 
         if self
             .columns
             .iter()
             .any(|c| (c.y as usize) < Screen::OLED_DISPLAY_HEIGHT / 4)
         {
-            while let Some(_) = renderer.input.poll() {}
+            while renderer.input.poll().is_some() {}
         }
 
         self.to.render(renderer);

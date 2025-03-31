@@ -54,9 +54,9 @@ impl Screen {
                     let x = x + offset_x;
                     let y_offset = y_offset as u8 + offset_y;
                     if is_on {
-                        Screen::draw_pixel(x, (y_offset + bit) as u8);
+                        Screen::draw_pixel(x, y_offset + bit);
                     } else {
-                        Screen::clear_pixel(x, (y_offset + bit) as u8);
+                        Screen::clear_pixel(x, y_offset + bit);
                     }
                 }
             }

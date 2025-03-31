@@ -24,11 +24,11 @@ macro_rules! define_options {
     (self => $type:ty, $($name:expr, $i:ident => $fun:expr),*$(,)?) => {
         #[allow(dead_code)]
         const LIST_STRINGS: &[&str] = &[$($name),*];
-        type CreatePage = fn(&mut $type) -> ::core::option::Option<::alloc::boxed::Box<dyn crate::page::Page>>;
+        type CreatePage = fn(&mut $type) -> ::core::option::Option<::alloc::boxed::Box<dyn $crate::page::Page>>;
 
         $(
             #[allow(non_snake_case)]
-            fn $i(arg: &mut $type) -> ::core::option::Option<::alloc::boxed::Box<dyn crate::page::Page>> {
+            fn $i(arg: &mut $type) -> ::core::option::Option<::alloc::boxed::Box<dyn $crate::page::Page>> {
                 let func: CreatePage = $fun;
                 func(arg)
             }
@@ -47,16 +47,16 @@ macro_rules! define_options {
     ($($name:expr, $i:ident => $fun:expr),*$(,)?) => {
         #[allow(dead_code)]
         const LIST_STRINGS: &[&str] = &[$($name),*];
-        type CreatePage = fn(&mut ::alloc::vec::Vec<::alloc::boxed::Box<dyn FnOnce()>>) -> ::core::option::Option<::alloc::boxed::Box<dyn crate::page::Page>>;
+        type CreatePage = fn(&mut ::alloc::vec::Vec<::alloc::boxed::Box<dyn FnOnce()>>) -> ::core::option::Option<::alloc::boxed::Box<dyn $crate::page::Page>>;
 
         $(
             #[allow(non_snake_case)]
-            fn $i(arg: &mut crate::pages::Actions) -> ::core::option::Option<::alloc::boxed::Box<dyn crate::page::Page>> {
+            fn $i(arg: &mut $crate::pages::Actions) -> ::core::option::Option<::alloc::boxed::Box<dyn $crate::page::Page>> {
                 if let Some(page) = $fun(arg) {
                     return Some(::alloc::boxed::Box::new(page));
                 }
 
-                None::<::alloc::boxed::Box<dyn crate::page::Page>>
+                None::<::alloc::boxed::Box<dyn $crate::page::Page>>
             }
         )*
 

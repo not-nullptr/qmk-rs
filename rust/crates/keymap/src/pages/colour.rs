@@ -53,12 +53,10 @@ impl Page for ColourPage {
                             } else {
                                 self.val = self.val.saturating_sub(4);
                             }
+                        } else if clockwise {
+                            self.hue = self.hue.saturating_add(4);
                         } else {
-                            if clockwise {
-                                self.hue = self.hue.saturating_add(4);
-                            } else {
-                                self.hue = self.hue.saturating_sub(4);
-                            }
+                            self.hue = self.hue.saturating_sub(4);
                         }
                     } else if i == 1 {
                         if clockwise {

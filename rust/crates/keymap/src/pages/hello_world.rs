@@ -47,12 +47,10 @@ impl Page for HelloWorldPage {
                         } else {
                             self.cursor.1 += 1;
                         }
+                    } else if index == 0 {
+                        self.cursor.0 -= 1;
                     } else {
-                        if index == 0 {
-                            self.cursor.0 -= 1;
-                        } else {
-                            self.cursor.1 -= 1;
-                        }
+                        self.cursor.1 -= 1;
                     }
                 }
             }

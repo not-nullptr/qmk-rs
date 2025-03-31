@@ -20,12 +20,12 @@ impl TransitionHandler for SlideTransition {
     }
 
     fn render(&mut self, renderer: &mut RenderInfo) -> bool {
-        let mut from_framebuffer = Framebuffer::new();
+        let mut from_framebuffer = Framebuffer::default();
         if self.progress >= 15 {
             return true;
         }
         // consume all input events while transitioning
-        while let Some(_) = renderer.input.poll() {}
+        while renderer.input.poll().is_some() {}
         self.to.render(renderer);
         let mut from_renderer = RenderInfo {
             framebuffer: &mut from_framebuffer,
@@ -53,12 +53,12 @@ impl TransitionHandler for SlideTransition {
 
 fn ease_in_out_expo(x: f32) -> f32 {
     if x == 0.0 {
-        return 0.0;
+        0.0
     } else if x == 1.0 {
-        return 1.0;
+        1.0
     } else if x < 0.5 {
-        return (2.0f32.powf(20.0 * x - 10.0)) / 2.0;
+        (2.0f32.powf(20.0 * x - 10.0)) / 2.0
     } else {
-        return (2.0 - 2.0f32.powf(-20.0 * x + 10.0)) / 2.0;
+        (2.0 - 2.0f32.powf(-20.0 * x + 10.0)) / 2.0
     }
 }

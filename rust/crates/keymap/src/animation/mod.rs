@@ -22,7 +22,7 @@ pub fn fps(n: u64) -> f32 {
     let duration = Duration::new(0, n as u32).as_nanos();
     let second = Duration::from_secs(1).as_nanos();
 
-    (((second / duration) as f32 / 1000000.0) / 1000.0) as f32
+    ((second / duration) as f32 / 1000000.0) / 1000.0
 }
 
 pub struct DeltaTime(pub f32);
@@ -55,7 +55,7 @@ impl Spring {
             return spring;
         }
 
-        let f_delta_time = delta_time.0 as f32;
+        let f_delta_time = delta_time.0;
 
         if damping_ratio.0 > 1.0 + EPSILON {
             // Over-damped.

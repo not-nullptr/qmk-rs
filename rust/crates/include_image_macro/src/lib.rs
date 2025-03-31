@@ -125,7 +125,7 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
     };
 
     let name_ident = syn::Ident::new(
-        &remove_non_alphanumeric(&parsed_args.path.split("/").last().expect("invalid path"))
+        &remove_non_alphanumeric(parsed_args.path.split("/").last().expect("invalid path"))
             .to_uppercase(),
         Span::call_site().into(),
     );
@@ -147,7 +147,7 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
 
     let mut all_lens = 0;
 
-    for (_, (name, _)) in files.into_iter().enumerate() {
+    for (name, _) in files.into_iter() {
         let (bytes, _name, width, height) = path_to_image(
             &format!("{}/{}", parsed_args.path, name),
             parsed_args.framebuffer_format,
@@ -155,10 +155,8 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
 
         if all_lens == 0 {
             all_lens = bytes.len();
-        } else {
-            if all_lens != bytes.len() {
-                panic!("non-equal image sizes");
-            }
+        } else if all_lens != bytes.len() {
+            panic!("non-equal image sizes");
         }
 
         let width = width as u8;

@@ -53,8 +53,7 @@ pub fn qmk_callback(
             delimiter: MacroDelimiter::Paren(Paren(Span::call_site())),
             tokens: quote! {
                 no_mangle
-            }
-            .into(),
+            },
         }),
         pound_token: Token![#](Span::call_site()),
         style: AttrStyle::Outer,

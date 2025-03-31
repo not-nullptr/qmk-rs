@@ -26,13 +26,13 @@ impl TransitionHandler for DitherTransition {
             return true;
         }
 
-        while let Some(_) = renderer.input.poll() {}
+        while renderer.input.poll().is_some() {}
 
         let mut from = PAGE.borrow_ref_mut(renderer.cs);
         from.render(renderer);
         drop(from);
 
-        let mut to_framebuffer = Framebuffer::new();
+        let mut to_framebuffer = Framebuffer::default();
         let mut to_renderer = RenderInfo {
             cs: renderer.cs,
             framebuffer: &mut to_framebuffer,
@@ -42,12 +42,11 @@ impl TransitionHandler for DitherTransition {
         };
 
         self.to.render(&mut to_renderer);
-        drop(to_renderer);
 
         for y in 0..Screen::OLED_DISPLAY_HEIGHT {
             for x in 0..Screen::OLED_DISPLAY_WIDTH {
-                let bayer_x = (x % 4) as usize;
-                let bayer_y = (y % 4) as usize;
+                let bayer_x = x % 4;
+                let bayer_y = y % 4;
                 let bayer_value = BAYER_MATRIX[bayer_y][bayer_x];
                 let threshold = self.progress * 2;
 

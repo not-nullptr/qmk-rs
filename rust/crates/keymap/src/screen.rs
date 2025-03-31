@@ -37,7 +37,7 @@ fn render_left() {
     let tick = TICK.load(Ordering::SeqCst);
     TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
     let actions = with(|cs| {
-        let mut framebuffer = Framebuffer::new();
+        let mut framebuffer = Framebuffer::default();
         let actions = draw_screen(&mut framebuffer, cs);
         draw_border(&mut framebuffer);
         framebuffer.render();
@@ -54,7 +54,7 @@ fn render_right() {
             let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
             *page = Some(ClockPage);
         }
-        let mut framebuffer = Framebuffer::new();
+        let mut framebuffer = Framebuffer::default();
         let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
         let mut actions = alloc::vec![];
         if let Some(ref mut page) = *page {
@@ -148,7 +148,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
         framebuffer,
         cs,
         tick,
-        input: &mut *input,
+        input: &mut input,
         actions: &mut actions,
     };
 

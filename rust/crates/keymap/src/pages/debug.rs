@@ -6,7 +6,9 @@ use crate::{
 use alloc::boxed::Box;
 
 define_options! {
-    "Back", back => |_| Some(HomePage::default()),
+    "Back", back => |_| {
+        Some(HomePage::default())
+    },
     "USB Boot", boot => |_| Some(BootPage::default()),
 }
 

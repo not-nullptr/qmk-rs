@@ -7,7 +7,6 @@ extern crate core;
 
 mod animation;
 mod config;
-#[cfg(not(test))]
 mod heap;
 mod image;
 mod init;
@@ -17,3 +16,10 @@ mod pages;
 mod random;
 mod screen;
 mod state;
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(start)]
+fn start() {
+    use console_error_panic_hook::set_once;
+    set_once();
+}

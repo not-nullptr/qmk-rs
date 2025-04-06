@@ -27,26 +27,32 @@ impl InputHandler {
         }
     }
 
+    #[inline(always)]
     pub fn left_encoder_down(&self) -> bool {
         self.left_encoder_down
     }
 
+    #[inline(always)]
     pub fn right_encoder_down(&self) -> bool {
         self.right_encoder_down
     }
 
+    #[inline(always)]
     pub fn is_key_down(&self, key: u32) -> bool {
         self.keys.contains(&key)
     }
 
+    #[inline(always)]
     pub fn is_key_up(&self, key: u32) -> bool {
         !self.is_key_down(key)
     }
 
+    #[inline(always)]
     pub fn keys(&self) -> &[u32] {
         &self.keys
     }
 
+    #[inline(always)]
     pub fn handle_event(&mut self, event: InputEvent) {
         self.events.push(event);
     }
@@ -59,6 +65,7 @@ impl InputHandler {
         }
     }
 
+    #[inline(always)]
     pub fn collect(&mut self) -> Vec<InputEvent> {
         core::mem::take(&mut self.events)
     }
@@ -84,6 +91,7 @@ impl InputHandler {
     }
 }
 
+#[derive(Debug)]
 pub enum InputEvent {
     EncoderScroll(u8, bool),
     EncoderClick(u8),

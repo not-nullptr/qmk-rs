@@ -1,10 +1,21 @@
+#[cfg(target_arch = "wasm32")]
+use alloc::string::ToString as _;
+#[cfg(not(target_arch = "wasm32"))]
 use qmk_sys::{
     eeconfig_init_user_datablock, eeconfig_is_user_datablock_valid, eeconfig_read_user_datablock,
     eeconfig_update_user_datablock,
 };
+#[cfg(target_arch = "wasm32")]
+use serde::{Deserialize, Serialize};
+#[cfg(target_arch = "wasm32")]
+use web_sys::window;
 
+#[cfg(not(target_arch = "wasm32"))]
 use crate::EEPROM_BYTES;
-use core::{ffi::c_void, marker::PhantomData};
+
+#[cfg(not(target_arch = "wasm32"))]
+use core::ffi::c_void;
+use core::marker::PhantomData;
 
 pub struct Unchecked;
 pub struct Checked;
@@ -26,6 +37,7 @@ impl<T: Sized> EEConfig<T, Unchecked> {
     /// Create a new checked instance of `EEConfig`.
     /// This is a runtime no-op, equivalent of caling EEConfig::save/load directly.
     pub const fn new() -> EEConfig<T, Checked> {
+        #[cfg(not(target_arch = "wasm32"))]
         assert!(
             core::mem::size_of::<T>() <= EEPROM_BYTES,
             "Size of T exceeds EEPROM size"
@@ -38,6 +50,7 @@ impl<T: Sized> EEConfig<T, Unchecked> {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl<T: Sized> EEConfig<T, Checked> {
     // at this point we can guarantee that the data size <= EEPROM_BYTES
 
@@ -64,4 +77,30 @@ impl<T: Sized> EEConfig<T, Checked> {
     pub fn init() {
         unsafe { eeconfig_init_user_datablock() }
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl<T: Sized + Serialize + for<'a> Deserialize<'a> + Default> EEConfig<T, Checked> {
+    pub fn save(&self, obj: &T) {
+        let json = serde_json::to_string(obj).unwrap_or_else(|_| "{}".to_string());
+        let window = window().unwrap();
+        let local_storage = window.local_storage().unwrap().unwrap();
+        local_storage.set_item("qmk_eeconfig", &json).unwrap();
+    }
+
+    pub fn load(&self) -> T {
+        let window = window().unwrap();
+        let local_storage = window.local_storage().unwrap().unwrap();
+        let json = local_storage
+            .get_item("qmk_eeconfig")
+            .unwrap()
+            .unwrap_or_else(|| "{}".to_string());
+        serde_json::from_str(&json).unwrap_or_else(|_| T::default())
+    }
+
+    pub fn is_valid() -> bool {
+        true
+    }
+
+    pub fn init() {}
 }

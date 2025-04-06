@@ -7,6 +7,7 @@ macro_rules! qmk_log {
     };
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn printf(s: impl Into<String>) {
     let s = s.into();
     for char in s.chars() {
@@ -18,4 +19,11 @@ pub fn printf(s: impl Into<String>) {
     unsafe {
         qmk_sys::sendchar(b'\n');
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn printf(s: impl Into<String>) {
+    use web_sys::console;
+    let s = s.into();
+    console::log_1(&s.into());
 }

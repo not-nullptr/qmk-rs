@@ -1,6 +1,8 @@
 use crate::state::{INPUT_HANDLER, InputEvent};
 use critical_section::with;
 use qmk::{KeyRecord, qk_keycode_defines, qmk_callback};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[qmk_callback((uint8_t, bool) -> bool)]
 fn encoder_update_user(index: u8, clockwise: bool) -> bool {
@@ -33,4 +35,25 @@ pub fn process_record_user(keycode: u16, record: *const KeyRecord) -> bool {
         input_handler.handle_event(event);
         false
     })
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn process_record_wasm(keycode: u16, time: u16, pressed: bool) -> bool {
+    use qmk::sys::{keyevent_t, keypos_t, tap_t};
+
+    let record = KeyRecord {
+        tap: tap_t {
+            _bitfield_1: Default::default(),
+            _bitfield_align_1: [],
+        },
+        event: keyevent_t {
+            key: keypos_t { row: 0, col: 0 },
+            pressed,
+            time,
+            type_: if pressed { 257 } else { 0 },
+        },
+    };
+
+    process_record_user(keycode, &record as *const KeyRecord)
 }

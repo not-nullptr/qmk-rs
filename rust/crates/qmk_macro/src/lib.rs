@@ -26,39 +26,83 @@ pub fn qmk_callback(
     attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
+    let out_dir = std::env::var("OUT_DIR").unwrap_or_else(|_| "unknown".to_string());
+
+    let out_dir = out_dir.split('/').collect::<Vec<_>>();
+
+    // get the index of the last element where the string == "target"
+    let target_index = out_dir
+        .iter()
+        .rposition(|s| s == &"target")
+        .unwrap_or_else(|| panic!("Failed to get the target dir: {out_dir:?}"));
+
+    let target = out_dir
+        .get(target_index + 1)
+        .unwrap_or_else(|| panic!("Could not find target in OUT_DIR: {out_dir:?}"));
+
+    let is_wasm = *target == "wasm32-unknown-unknown";
+
     let mut function = parse_macro_input!(item as syn::ItemFn);
     // the new syntax is (Ident, Ident, Ident) -> Ident
     let signature = parse_macro_input!(attr as Signature);
     let name = function.sig.ident.to_string();
     // add _rs to the end of the ident
-    let modified_name = format!("{name}_rs");
-    function.sig.ident = Ident::new(modified_name.as_str(), Span::call_site());
+    if !is_wasm {
+        let modified_name = format!("{name}_rs");
+        function.sig.ident = Ident::new(&modified_name, Span::call_site());
+    }
     let callback = QmkCallback::new(name, signature);
     function.vis = Visibility::Public(Token![pub](Span::call_site()));
-    function.sig.abi = Some(syn::Abi {
-        extern_token: Token![extern](Span::call_site()),
-        name: Some(LitStr::new("C", Span::call_site())),
-    });
-    let no_mangle = Attribute {
-        bracket_token: Default::default(),
-        meta: Meta::List(MetaList {
-            path: Path {
+    if is_wasm {
+        // add #[::wasm_bindgen::prelude::wasm_bindgen]
+        // to the function
+
+        let wasm_bindgen = Attribute {
+            bracket_token: Default::default(),
+            meta: Meta::Path(Path {
                 leading_colon: None,
                 segments: {
                     let mut segments = Punctuated::new();
-                    segments.push_value(Ident::new("unsafe", Span::call_site()).into());
+                    segments.push_value(Ident::new("wasm_bindgen", Span::call_site()).into());
+                    segments.push_punct(Token![::](Span::call_site()));
+                    segments.push_value(Ident::new("prelude", Span::call_site()).into());
+                    segments.push_punct(Token![::](Span::call_site()));
+                    segments.push_value(Ident::new("wasm_bindgen", Span::call_site()).into());
                     segments
                 },
-            },
-            delimiter: MacroDelimiter::Paren(Paren(Span::call_site())),
-            tokens: quote! {
-                no_mangle
-            },
-        }),
-        pound_token: Token![#](Span::call_site()),
-        style: AttrStyle::Outer,
-    };
-    function.attrs = vec![no_mangle];
+            }),
+            pound_token: Token![#](Span::call_site()),
+            style: AttrStyle::Outer,
+        };
+
+        function.attrs = vec![wasm_bindgen];
+    } else {
+        function.sig.abi = Some(syn::Abi {
+            extern_token: Token![extern](Span::call_site()),
+            name: Some(LitStr::new("C", Span::call_site())),
+        });
+        let no_mangle = Attribute {
+            bracket_token: Default::default(),
+            meta: Meta::List(MetaList {
+                path: Path {
+                    leading_colon: None,
+                    segments: {
+                        let mut segments = Punctuated::new();
+                        segments.push_value(Ident::new("unsafe", Span::call_site()).into());
+                        segments
+                    },
+                },
+                delimiter: MacroDelimiter::Paren(Paren(Span::call_site())),
+                tokens: quote! {
+                    no_mangle
+                },
+            }),
+            pound_token: Token![#](Span::call_site()),
+            style: AttrStyle::Outer,
+        };
+        function.attrs = vec![no_mangle];
+    }
+
     // get arg types
     let args = &callback.signature.args;
 

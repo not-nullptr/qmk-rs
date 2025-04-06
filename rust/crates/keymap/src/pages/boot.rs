@@ -6,7 +6,10 @@ use crate::{
     screen::IS_TRANSITIONING,
 };
 use alloc::boxed::Box;
+#[cfg(not(target_arch = "wasm32"))]
 use rp2040_hal::rom_data::reset_to_usb_boot;
+
+use super::DebugPage;
 
 #[derive(Default)]
 pub struct BootPage {
@@ -27,10 +30,16 @@ impl Page for BootPage {
         }
 
         self.boot = true;
+
+        #[cfg(not(target_arch = "wasm32"))]
         renderer.actions.push(Box::new(|| {
             reset_to_usb_boot(0, 0);
         }));
 
-        None
+        #[cfg(not(target_arch = "wasm32"))]
+        return None;
+
+        #[cfg(target_arch = "wasm32")]
+        Some(Box::new(DebugPage::default()))
     }
 }

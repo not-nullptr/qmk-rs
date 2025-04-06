@@ -1,3 +1,4 @@
+use super::TransitionHandler;
 use crate::{
     page::{Page, RenderInfo},
     state::PAGE,
@@ -6,8 +7,6 @@ use alloc::boxed::Box;
 #[cfg(not(test))]
 use micromath::F32Ext;
 use qmk::framebuffer::Framebuffer;
-
-use super::TransitionHandler;
 
 pub struct SlideTransition {
     to: Box<dyn Page>,

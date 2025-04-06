@@ -10,7 +10,6 @@ members = [
     "crates/qmk_callback_parsing",
     "crates/qmk_sys",
     "crates/qmk",
-    "crates/panic_send",
 ]
 
 [profile.dev]

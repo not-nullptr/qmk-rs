@@ -2,7 +2,11 @@
 
 extern crate alloc;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub const EEPROM_BYTES: usize = 4;
+
+#[cfg(target_arch = "wasm32")]
+pub const EEPROM_BYTES: usize = usize::MAX;
 
 pub use qmk_macro::*;
 pub mod eeconfig;

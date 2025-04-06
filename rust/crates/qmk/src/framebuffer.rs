@@ -1,12 +1,8 @@
 use crate::screen::Screen;
 use alloc::{string::String, vec::Vec};
-use core::mem::transmute;
 use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
-#[allow(unused_imports)]
-use micromath::F32Ext;
 use num_traits::{Num, ToPrimitive};
-use qmk_sys::{oled_buffer_reader_t, oled_write_raw_byte};
 
 const FONTPLATE: [u8; 1344] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x6A, 0x52, 0x6A, 0x3C, 0x00, 0x3C, 0x6A, 0x4E, 0x6A,
@@ -103,80 +99,14 @@ pub const CHAR_SIZE: usize = CHAR_WIDTH * CHAR_HEIGHT;
 pub const CHAR_ROWS: usize = FONT_WIDTH / CHAR_WIDTH;
 pub const CHAR_COLS: usize = FONT_HEIGHT / CHAR_HEIGHT;
 
+#[cfg(not(target_arch = "wasm32"))]
 unsafe extern "C" {
     static mut oled_buffer: [u8; Screen::OLED_DISPLAY_SIZE];
     static mut oled_dirty: u16;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 const ALL_DIRTY: u16 = (((1 << (16 - 1)) - 1) << 1) | 1;
-
-pub struct FramebufferRetriever {
-    pub framebuffer: oled_buffer_reader_t,
-}
-
-impl FramebufferRetriever {
-    pub fn retrieve() -> Self {
-        let framebuffer = unsafe { qmk_sys::oled_read_raw(0) };
-        Self { framebuffer }
-    }
-}
-
-pub struct FramebufferIterator {
-    framebuffer: oled_buffer_reader_t,
-    index: usize,
-}
-
-impl Iterator for FramebufferIterator {
-    type Item = FramebufferItem;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.framebuffer.remaining_element_count == 0 {
-            return None;
-        }
-
-        let item = FramebufferItem::new(self.framebuffer.current_element, self.index as u16);
-        self.framebuffer.current_element = unsafe { self.framebuffer.current_element.add(1) };
-        self.framebuffer.remaining_element_count -= 1;
-        self.index += 1;
-        Some(item)
-    }
-}
-
-// the internal fb gets consumed when the iterator is finished, so we need to use
-// intoiterator instead of iterator to represent this contract at the type level
-impl IntoIterator for FramebufferRetriever {
-    type Item = FramebufferItem;
-    type IntoIter = FramebufferIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        FramebufferIterator {
-            framebuffer: self.framebuffer,
-            index: 0,
-        }
-    }
-}
-
-pub struct FramebufferItem {
-    byte: *mut u8,
-    index: u16,
-}
-
-impl FramebufferItem {
-    pub fn new(byte: *mut u8, index: u16) -> Self {
-        Self { byte, index }
-    }
-
-    pub fn read(&self) -> u8 {
-        unsafe { *self.byte }
-    }
-
-    pub fn write(&self, byte: u8) {
-        unsafe {
-            #[allow(clippy::missing_transmute_annotations)]
-            oled_write_raw_byte(transmute(byte), self.index);
-        };
-    }
-}
 
 type FramebufferArray = [u8; Screen::OLED_DISPLAY_SIZE];
 
@@ -201,11 +131,42 @@ impl Framebuffer {
         self.framebuffer
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn render(self) {
         unsafe {
             #[allow(static_mut_refs)]
             core::ptr::write(&raw mut oled_buffer, self.framebuffer);
             oled_dirty = ALL_DIRTY;
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn render(&self, canvas: web_sys::HtmlCanvasElement) {
+        use js_sys::wasm_bindgen::JsValue;
+        use web_sys::wasm_bindgen::JsCast;
+
+        let ctx = canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap();
+
+        // clear as black
+        ctx.set_fill_style_str("black");
+        ctx.fill_rect(
+            0.0,
+            0.0,
+            Screen::OLED_DISPLAY_WIDTH as f64,
+            Screen::OLED_DISPLAY_HEIGHT as f64,
+        );
+        ctx.set_fill_style_str("white");
+        for y in 0..Screen::OLED_DISPLAY_HEIGHT {
+            for x in 0..Screen::OLED_DISPLAY_WIDTH {
+                if self.get_pixel(x, y) {
+                    ctx.fill_rect(x as f64, y as f64, 1.0, 1.0);
+                }
+            }
         }
     }
 

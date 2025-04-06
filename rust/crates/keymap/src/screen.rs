@@ -7,7 +7,7 @@ use crate::{
     config::PageTransition,
     page::{Page as _, RenderInfo},
     pages::{
-        ClockPage, DitherTransition, DoomTransition, ScaleTransition, SlideTransition,
+        Actions, ClockPage, DitherTransition, DoomTransition, ScaleTransition, SlideTransition,
         TRANSITION_TYPE, TransitionHandler,
     },
     state::{INPUT_HANDLER, PAGE},
@@ -22,33 +22,52 @@ pub static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
 pub static IS_TRANSITIONING: AtomicBool = AtomicBool::new(false);
 static RIGHT_HAND_PAGE: Mutex<RefCell<Option<ClockPage>>> = Mutex::new(RefCell::new(None));
 
+#[cfg(not(target_arch = "wasm32"))]
 #[qmk_callback(() -> bool)]
 fn oled_task_user() -> bool {
-    if Keyboard::is_right() {
-        render_right();
+    let (actions, fb) = if Keyboard::is_right() {
+        render_right()
     } else {
-        render_left();
+        render_left()
+    };
+
+    fb.render();
+
+    for action in actions {
+        action();
     }
 
     false
 }
 
-fn render_left() {
-    let tick = TICK.load(Ordering::SeqCst);
-    TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
-    let actions = with(|cs| {
-        let mut framebuffer = Framebuffer::default();
-        let actions = draw_screen(&mut framebuffer, cs);
-        draw_border(&mut framebuffer);
-        framebuffer.render();
-        actions
-    });
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn oled_task_user_wasm(canvas: web_sys::HtmlCanvasElement) {
+    let (actions, fb) = if Keyboard::is_right() {
+        render_right()
+    } else {
+        render_left()
+    };
+
+    fb.render(canvas);
+
     for action in actions {
         action();
     }
 }
 
-fn render_right() {
+fn render_left() -> (Actions, Framebuffer) {
+    let tick = TICK.load(Ordering::SeqCst);
+    TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
+    with(|cs| {
+        let mut framebuffer = Framebuffer::default();
+        let actions = draw_screen(&mut framebuffer, cs);
+        draw_border(&mut framebuffer);
+        (actions, framebuffer)
+    })
+}
+
+fn render_right() -> (Actions, Framebuffer) {
     with(|cs| {
         if RIGHT_HAND_PAGE.borrow_ref(cs).is_none() {
             let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
@@ -74,12 +93,8 @@ fn render_right() {
 
         draw_border(&mut framebuffer);
 
-        framebuffer.render();
-
-        for action in actions {
-            action();
-        }
-    });
+        (actions, framebuffer)
+    })
 }
 
 fn draw_border(framebuffer: &mut Framebuffer) {

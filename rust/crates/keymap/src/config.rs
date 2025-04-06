@@ -6,6 +6,7 @@ use qmk::eeconfig::EEConfig;
 pub static SETTINGS: Mutex<RefCell<UserConfig>> = Mutex::new(RefCell::new(UserConfig::new()));
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u8)]
 pub enum PageTransition {
     #[default]
@@ -28,6 +29,7 @@ impl PageTransition {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
+#[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
 pub struct UserConfig {
     pub transition: PageTransition,
     pub hsv: [u8; 3],

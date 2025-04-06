@@ -5,24 +5,44 @@ edition = "2024"
 
 [lib]
 name = "keymap"
-crate-type = ["staticlib"]
 path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
 
+[target.thumbv6m-none-eabi.lib]
+crate-type = ["staticlib"]
 
 [dependencies]
 embedded-alloc = "0.6.0"
 include-image = { path = "../include_image" }
 panic-halt = "1.0.0"
-rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
 qmk = { path = "../qmk" }
-critical-section = "1.2.0"
 once_cell = { version = "1.21.1", default-features = false, features = [
     "alloc",
     "critical-section",
     "atomic-polyfill",
 ] }
 micromath = "2.1.0"
+anyhow = { version = "1.0.97", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+serde = { version = "1.0.219", features = ["serde_derive"] }
+wasm-bindgen = "0.2.100"
+critical-section = { version = "1.2.0", features = ["std"] }
+console_error_panic_hook = "0.1.7"
+web-sys = { version = "0.3.77", features = [
+    'CanvasRenderingContext2d',
+    'Document',
+    'Element',
+    'HtmlCanvasElement',
+    'Window',
+] }
+js-sys = "0.3.77"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rp2040-panic-usb-boot = "0.6.0"
+rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
+critical-section = "1.2.0"
+
 
 [target.thumbv6m-none-eabi.dependencies]
 portable-atomic = { version = "1.8", features = ["unsafe-assume-single-core"] }

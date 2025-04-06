@@ -1,5 +1,8 @@
+#[cfg(not(target_arch = "wasm32"))]
 use alloc::{ffi::CString, string::String};
+#[cfg(not(target_arch = "wasm32"))]
 use include_image::QmkImage;
+#[cfg(not(target_arch = "wasm32"))]
 use num_traits::{Num, ToPrimitive};
 
 pub struct Screen;
@@ -10,6 +13,7 @@ impl Screen {
     pub const OLED_DISPLAY_SIZE: usize =
         ((Self::OLED_DISPLAY_WIDTH * Self::OLED_DISPLAY_HEIGHT) / 8);
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn draw_pixel<T, U>(x: T, y: U)
     where
         T: Num + ToPrimitive,
@@ -23,6 +27,7 @@ impl Screen {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn clear_pixel<T, U>(x: T, y: U)
     where
         T: Num + ToPrimitive,
@@ -36,6 +41,7 @@ impl Screen {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn draw_image<T, U, const N: usize>(x: T, y: U, image: QmkImage<N>)
     where
         T: Num + ToPrimitive,
@@ -63,6 +69,7 @@ impl Screen {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn draw_text<T, U>(row: T, col: U, text: impl Into<String>)
     where
         T: Num + ToPrimitive,

@@ -31,7 +31,10 @@ fn main() {
         env::set_var("BINDGEN_EXTRA_CLANG_ARGS", extra_clang_args);
     }
 
-    let bindings = bindgen::builder()
+    // check if the target is wasm32
+    let is_wasm_target = env::var("TARGET").unwrap_or_default() == "wasm32-unknown-unknown";
+
+    let mut bindings = bindgen::builder()
         .headers(HEADER_PATHS.iter().map(|path| path.to_string()))
         .use_core()
         .clang_args(HEADER_PATHS.iter().map(|path| {
@@ -55,9 +58,17 @@ fn main() {
         .rustified_enum(".*")
         .constified_enum_module(".*")
         .generate_comments(true)
-        .header_contents("progmem.h", "#define PROGMEM")
-        .generate()
-        .expect("Unable to generate bindings");
+        .header_contents("progmem.h", "#define PROGMEM");
+
+    if is_wasm_target {
+        // set the target architecture to just x86 gnu
+        bindings = bindings
+            .ignore_functions()
+            .ignore_methods()
+            .clang_arg("--target=thumbv6m-none-eabi");
+    }
+
+    let bindings = bindings.generate().expect("Unable to generate bindings");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings

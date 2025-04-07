@@ -6,10 +6,7 @@ edition = "2024"
 [lib]
 name = "keymap"
 path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
-
-[target.thumbv6m-none-eabi.lib]
-crate-type = ["staticlib"]
+crate-type = ["cdylib", "rlib", "staticlib"]
 
 [dependencies]
 embedded-alloc = "0.6.0"

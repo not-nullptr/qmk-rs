@@ -9,6 +9,7 @@ use alloc::boxed::Box;
 #[cfg(not(target_arch = "wasm32"))]
 use rp2040_hal::rom_data::reset_to_usb_boot;
 
+#[cfg(target_arch = "wasm32")]
 use super::DebugPage;
 
 #[derive(Default)]

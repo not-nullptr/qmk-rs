@@ -14,7 +14,9 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
-use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, qmk_callback, screen::Screen};
+#[cfg(not(target_arch = "wasm32"))]
+use qmk::qmk_callback;
+use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, screen::Screen};
 
 pub static TICK: AtomicU32 = AtomicU32::new(0);
 pub static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
@@ -31,7 +33,9 @@ fn oled_task_user() -> bool {
         render_left()
     };
 
-    fb.render();
+    with(move |cs| {
+        fb.render();
+    });
 
     for action in actions {
         action();

@@ -1,5 +1,5 @@
-use alloc::string::String;
-use alloc::string::ToString;
+#[cfg(target_arch = "wasm32")]
+use alloc::string::{String, ToString};
 use core::cell::RefCell;
 use critical_section::Mutex;
 use once_cell::sync::Lazy;

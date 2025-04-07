@@ -1,16 +1,8 @@
-#[cfg(target_arch = "wasm32")]
-use alloc::string::ToString as _;
-use alloc::{
-    format,
-    vec::{self, Vec},
-};
 #[cfg(not(target_arch = "wasm32"))]
 use qmk_sys::{
     eeconfig_init_user_datablock, eeconfig_is_user_datablock_valid, eeconfig_read_user_datablock,
     eeconfig_update_user_datablock,
 };
-#[cfg(target_arch = "wasm32")]
-use serde::{Deserialize, Serialize};
 #[cfg(target_arch = "wasm32")]
 use web_sys::window;
 
@@ -18,9 +10,15 @@ use web_sys::window;
 use crate::EEPROM_BYTES;
 #[cfg(target_arch = "wasm32")]
 use crate::qmk_log;
+#[cfg(target_arch = "wasm32")]
+use alloc::format;
+#[cfg(target_arch = "wasm32")]
+use alloc::vec::Vec;
 #[cfg(not(target_arch = "wasm32"))]
 use core::ffi::c_void;
-use core::{fmt::Debug, marker::PhantomData};
+#[cfg(target_arch = "wasm32")]
+use core::fmt::Debug;
+use core::marker::PhantomData;
 
 pub struct Unchecked;
 pub struct Checked;

@@ -9,7 +9,7 @@ use std::{
 use crate::{
     defs::{
         DefArc, DefBox, DefCell, DefMutex, DefOption, DefPhantomData, DefRc, DefRefCell, DefResult,
-        DefRwLock, DefStr, DefStrSlice, DefString, DefType, DefVec,
+        DefRwLock, DefStr, DefString, DefType, DefVec,
     },
     Inspect, TypesCollector,
 };

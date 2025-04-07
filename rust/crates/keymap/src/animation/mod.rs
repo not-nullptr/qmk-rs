@@ -1,6 +1,7 @@
 use alloc::fmt;
 use core::{fmt::Formatter, time::Duration};
 #[cfg(not(test))]
+#[cfg(not(target_arch = "wasm32"))]
 use micromath::F32Ext;
 
 // THIS CODE IS MODIFIED FROM https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs

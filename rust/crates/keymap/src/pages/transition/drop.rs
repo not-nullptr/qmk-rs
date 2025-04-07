@@ -5,6 +5,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 #[cfg(not(test))]
+#[cfg(not(target_arch = "wasm32"))]
 use micromath::F32Ext;
 use qmk::framebuffer::Framebuffer;
 

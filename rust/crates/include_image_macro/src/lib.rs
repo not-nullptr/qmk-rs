@@ -18,7 +18,7 @@ fn to_format(
     use_fb_format: bool,
 ) -> Vec<u8> {
     let mut output = Vec::new();
-    let blocks_per_col = (height + 7) / 8;
+    let blocks_per_col = height.div_ceil(8);
 
     for x in 0..width {
         for block in 0..blocks_per_col {
@@ -55,7 +55,7 @@ fn path_to_image(path: &str, use_fb_format: bool) -> (Vec<u8>, String, usize, us
 
     let path = path
         .split('/')
-        .last()
+        .next_back()
         .expect("failed to get last part of path");
     let split: Vec<_> = path.split('.').collect();
     let name = remove_non_alphanumeric(&split[0..split.len() - 1].join(".")).to_uppercase();

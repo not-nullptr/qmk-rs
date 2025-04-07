@@ -1,11 +1,8 @@
 use std::mem::{align_of, size_of};
 
 use layout_inspect::{
-    defs::{
-        DefPhantomData, DefResult, DefStr, DefStrSlice, DefString, DefStruct, DefStructField,
-        DefType,
-    },
-    inspect, Inspect,
+    defs::{DefPhantomData, DefResult, DefStr, DefString, DefType},
+    inspect,
 };
 
 #[test]

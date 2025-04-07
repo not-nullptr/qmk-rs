@@ -142,7 +142,6 @@ impl Framebuffer {
 
     #[cfg(target_arch = "wasm32")]
     pub fn render(&self, canvas: web_sys::HtmlCanvasElement) {
-        use js_sys::wasm_bindgen::JsValue;
         use web_sys::wasm_bindgen::JsCast;
 
         let ctx = canvas
@@ -466,7 +465,7 @@ impl Framebuffer {
         let width = width as usize;
         let height = height as usize;
 
-        let byte_rows = (height + 7) / 8;
+        let byte_rows = height.div_ceil(8);
         let mut out = alloc::vec![0u8; width * byte_rows];
 
         for col in 0..width {
@@ -513,7 +512,7 @@ impl Framebuffer {
         let width = width as usize;
         let height = height as usize;
 
-        let byte_rows = (height + 7) / 8;
+        let byte_rows = height.div_ceil(8);
 
         for col in 0..width {
             for byte_row in 0..byte_rows {
@@ -550,7 +549,7 @@ impl Framebuffer {
         let offset_x = offset_x.to_u8().unwrap_or(255);
         let offset_y = offset_y.to_u8().unwrap_or(255);
 
-        let img_pages = (image.height as usize + 7) / 8;
+        let img_pages = (image.height as usize).div_ceil(8);
         let display_width = Screen::OLED_DISPLAY_WIDTH;
 
         for x in 0..image.width as usize {

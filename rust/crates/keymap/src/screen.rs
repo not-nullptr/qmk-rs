@@ -27,14 +27,14 @@ static RIGHT_HAND_PAGE: Mutex<RefCell<Option<ClockPage>>> = Mutex::new(RefCell::
 #[cfg(not(target_arch = "wasm32"))]
 #[qmk_callback(() -> bool)]
 fn oled_task_user() -> bool {
-    let (actions, fb) = if Keyboard::is_right() {
-        render_right()
-    } else {
-        render_left()
-    };
-
-    with(move |cs| {
+    let actions = with(|_| {
+        let (actions, fb) = if Keyboard::is_right() {
+            render_right()
+        } else {
+            render_left()
+        };
         fb.render();
+        actions
     });
 
     for action in actions {

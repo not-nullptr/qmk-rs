@@ -26,9 +26,9 @@ pub struct ColourPage {
 impl Page for ColourPage {
     fn init(&mut self, renderer: &mut RenderInfo) {
         let settings = SETTINGS.borrow_ref(renderer.cs);
-        self.hue = settings.hsv[0];
-        self.sat = settings.hsv[1];
-        self.val = settings.hsv[2];
+        self.hue = settings.hsv.0[0];
+        self.sat = settings.hsv.0[1];
+        self.val = settings.hsv.0[2];
     }
 
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
@@ -37,9 +37,9 @@ impl Page for ColourPage {
                 InputEvent::EncoderClick(i) => {
                     if i == 0 {
                         let mut settings = SETTINGS.borrow_ref_mut(renderer.cs);
-                        settings.hsv[0] = self.hue;
-                        settings.hsv[1] = self.sat;
-                        settings.hsv[2] = self.val;
+                        settings.hsv.0[0] = self.hue;
+                        settings.hsv.0[1] = self.sat;
+                        settings.hsv.0[2] = self.val;
                         settings.save();
                         return Some(Box::new(HomePage::default()));
                     }

@@ -12,12 +12,11 @@ unsafe extern "C" {
 #[qmk_callback(() -> void)]
 fn keyboard_post_init_user() {
     let settings = with(|cs| {
-        let mut settings = SETTINGS.borrow_ref_mut(cs);
-        settings.load();
+        let settings = SETTINGS.borrow_ref(cs);
         #[allow(clippy::clone_on_copy)]
         settings.clone()
     });
-    RGBLight::set_hsv(settings.hsv[0], settings.hsv[1], settings.hsv[2]);
+    RGBLight::set_hsv(settings.hsv.0[0], settings.hsv.0[1], settings.hsv.0[2]);
     TRANSITION_TYPE.store(settings.transition as u8, Ordering::SeqCst);
     #[cfg(not(target_arch = "wasm32"))]
     unsafe {

@@ -1,0 +1,24 @@
+[package]
+name = "layout_inspect"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+
+[dependencies]
+layout_inspect_derive = { path = "../layout_inspect_derive", optional = true }
+memoffset = { version = "0.8.0", optional = true }
+regex = { version = "1", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+macro_rules_attribute = "0.1.3"
+
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+
+[features]
+default = ["stable", "derive"]
+stable = ["dep:regex"]
+nightly = []
+derive = ["dep:layout_inspect_derive", "dep:memoffset"]
+serde = ["dep:serde"]
+unique_names = []

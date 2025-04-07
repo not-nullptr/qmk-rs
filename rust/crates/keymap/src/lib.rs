@@ -4,6 +4,8 @@
 
 extern crate alloc;
 extern crate core;
+#[cfg(target_arch = "wasm32")]
+extern crate std;
 
 mod animation;
 mod config;

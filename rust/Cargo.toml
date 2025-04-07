@@ -10,6 +10,8 @@ members = [
     "crates/qmk_callback_parsing",
     "crates/qmk_sys",
     "crates/qmk",
+    "crates/layout_inspect",
+    "crates/layout_inspect_derive",
 ]
 
 [profile.dev]

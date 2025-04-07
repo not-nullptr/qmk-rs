@@ -37,12 +37,13 @@ web-sys = { version = "0.3.77", features = [
     'Window',
 ] }
 js-sys = "0.3.77"
+layout_inspect = { path = "../layout_inspect", features = ["derive", "serde"] }
+serde_json = "1.0.140"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rp2040-panic-usb-boot = "0.6.0"
 rp2040-hal = { version = "0.11.0", features = ["critical-section-impl"] }
 critical-section = "1.2.0"
-
 
 [target.thumbv6m-none-eabi.dependencies]
 portable-atomic = { version = "1.8", features = ["unsafe-assume-single-core"] }

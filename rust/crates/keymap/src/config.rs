@@ -8,6 +8,7 @@ use qmk::eeconfig::EEConfig;
 pub static SETTINGS: Lazy<Mutex<RefCell<UserConfig>>> = Lazy::new(|| {
     let mut config = UserConfig::new();
     config.load();
+    config.save();
     Mutex::new(RefCell::new(config))
 });
 
@@ -18,8 +19,8 @@ pub static SETTINGS: Lazy<Mutex<RefCell<UserConfig>>> = Lazy::new(|| {
 )]
 #[repr(u8)]
 pub enum PageTransition {
-    #[default]
     Dither,
+    #[default]
     Scale,
     Slide,
     Doom,

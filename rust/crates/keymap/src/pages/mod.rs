@@ -6,6 +6,7 @@ mod debug;
 mod hello_world;
 mod home;
 mod settings;
+mod startup;
 mod transition;
 
 pub use boot::*;
@@ -15,6 +16,7 @@ pub use debug::*;
 pub use hello_world::*;
 pub use home::*;
 pub use settings::*;
+pub use startup::*;
 pub use transition::*;
 
 pub type Actions = ::alloc::vec::Vec<::alloc::boxed::Box<dyn FnOnce()>>;

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::page::Page;
-use crate::pages::HomePage;
+use crate::pages::StartupPage;
 use alloc::vec;
 use alloc::{boxed::Box, vec::Vec};
 use core::cell::RefCell;
@@ -100,4 +100,4 @@ pub enum InputEvent {
 pub static INPUT_HANDLER: Lazy<Mutex<RefCell<InputHandler>>> =
     Lazy::new(|| Mutex::new(RefCell::new(InputHandler::new())));
 pub static PAGE: Lazy<Mutex<RefCell<Box<dyn Page>>>> =
-    Lazy::new(|| Mutex::new(RefCell::new(Box::new(HomePage::default()))));
+    Lazy::new(|| Mutex::new(RefCell::new(Box::new(StartupPage::default()))));

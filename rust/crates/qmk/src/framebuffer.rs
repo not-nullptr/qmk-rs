@@ -576,4 +576,33 @@ impl Framebuffer {
             }
         }
     }
+
+    pub fn dither<T>(&mut self, progress: T)
+    where
+        T: Num + ToPrimitive,
+    {
+        if progress.is_zero() {
+            return;
+        }
+        const BAYER_MATRIX: [[u8; 4]; 4] =
+            [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+        let progress = progress.to_u8().unwrap_or(0);
+        let progress = progress % 16;
+
+        for y in 0..Screen::OLED_DISPLAY_HEIGHT {
+            for x in 0..Screen::OLED_DISPLAY_WIDTH {
+                let bayer_x = x % 4;
+                let bayer_y = y % 4;
+                let bayer_value = BAYER_MATRIX[bayer_y][bayer_x];
+                let threshold = progress * 2;
+
+                if bayer_value > threshold {
+                    continue;
+                }
+
+                self.clear_pixel(x, y);
+            }
+        }
+    }
 }

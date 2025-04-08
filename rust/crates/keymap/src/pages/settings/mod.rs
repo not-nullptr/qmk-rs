@@ -1,3 +1,4 @@
+mod startup;
 mod transition;
 
 use super::{
@@ -9,11 +10,13 @@ use crate::{
     page::{Page, RenderInfo},
 };
 use alloc::boxed::Box;
+use startup::StartupSettingsPage;
 use transition::TransitionSettingsPage;
 
 define_options! {
     "Back", back => |_| Some(HomePage::default()),
     "Anims", anims => |_| Some(TransitionSettingsPage::default()),
+    "Startup", startup => |_| Some(StartupSettingsPage::default()),
 }
 
 pub struct SettingsPage {

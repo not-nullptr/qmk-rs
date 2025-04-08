@@ -1,8 +1,10 @@
 use crate::{
+    config::SETTINGS,
     image::CREDIT,
     page::{Page, RenderInfo},
 };
 use alloc::boxed::Box;
+use critical_section::with;
 
 use super::HomePage;
 
@@ -22,6 +24,17 @@ fn map_value(n: u8) -> u8 {
 
 impl Page for StartupPage {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
+        if self.tick == 0 {
+            let skip = with(|cs| {
+                let config = SETTINGS.borrow_ref(cs);
+                config.startup_skip
+            });
+
+            if skip {
+                return Some(Box::new(HomePage::default()));
+            }
+        }
+
         if self.tick > 44 {
             return Some(Box::new(HomePage::default()));
         }

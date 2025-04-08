@@ -51,6 +51,7 @@ pub struct Hsv(pub [u8; 3]);
 pub struct UserConfig {
     pub transition: PageTransition,
     pub hsv: Hsv,
+    pub startup_skip: bool,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -83,6 +84,7 @@ impl UserConfig {
         Self {
             transition: PageTransition::Dither,
             hsv: Hsv([0, 0, 0]),
+            startup_skip: false,
         }
     }
 

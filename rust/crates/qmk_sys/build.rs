@@ -10,6 +10,7 @@ const HEADER_PATHS: &[&str] = &[
     "../../../quantum/rgblight/rgblight.h",
     "../../../quantum/split_common/transactions.h",
     "../../../quantum/eeconfig.h",
+    "../../../quantum/keymap_extras/keymap_us.h",
 ];
 
 fn main() {

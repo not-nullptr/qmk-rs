@@ -32,6 +32,10 @@ define_options! {
         TRANSITION_TYPE.store(PageTransition::Doom as u8, Ordering::SeqCst);
         None
     },
+    "None", none => |_| {
+        TRANSITION_TYPE.store(PageTransition::None as u8, Ordering::SeqCst);
+        None
+    },
 }
 
 impl Default for TransitionSettingsPage {

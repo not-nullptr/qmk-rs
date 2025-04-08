@@ -24,6 +24,7 @@ pub enum PageTransition {
     Scale,
     Slide,
     Doom,
+    None,
 }
 
 impl PageTransition {
@@ -33,7 +34,8 @@ impl PageTransition {
             1 => PageTransition::Scale,
             2 => PageTransition::Slide,
             3 => PageTransition::Doom,
-            _ => PageTransition::Dither,
+            4 => PageTransition::None,
+            _ => PageTransition::default(),
         }
     }
 }

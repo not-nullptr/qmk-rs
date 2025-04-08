@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include QMK_KEYBOARD_H
 #include "transactions.h"
-// also include the rust_bindings C file
 #include <rust_bindings.c>
 
 enum sofle_layers {
@@ -24,6 +23,7 @@ enum custom_keycodes {
 #define KC_QWERTY PDF(_QWERTY)
 #define KC_COLEMAK PDF(_COLEMAK)
 
+#ifdef DEFAULT_KEYMAP
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
  * QWERTY
@@ -135,6 +135,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                    _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______
   )
 };
+#endif
+
+#ifndef DEFAULT_KEYMAP
+const extern uint16_t PROGMEM keymaps[1][MATRIX_ROWS][MATRIX_COLS];
+#endif
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
   return OLED_ROTATION_0;

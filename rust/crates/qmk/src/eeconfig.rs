@@ -1,3 +1,5 @@
+#![allow(clippy::absurd_extreme_comparisons)]
+
 #[cfg(not(target_arch = "wasm32"))]
 use qmk_sys::{
     eeconfig_init_user_datablock, eeconfig_is_user_datablock_valid, eeconfig_read_user_datablock,
@@ -6,7 +8,6 @@ use qmk_sys::{
 #[cfg(target_arch = "wasm32")]
 use web_sys::window;
 
-#[cfg(not(target_arch = "wasm32"))]
 use crate::EEPROM_BYTES;
 #[cfg(target_arch = "wasm32")]
 use crate::qmk_log;
@@ -40,7 +41,6 @@ impl<T: Sized> EEConfig<T, Unchecked> {
     /// Create a new checked instance of `EEConfig`.
     /// This is a runtime no-op, equivalent of caling EEConfig::save/load directly.
     pub const fn new() -> EEConfig<T, Checked> {
-        #[cfg(not(target_arch = "wasm32"))]
         assert!(
             core::mem::size_of::<T>() <= EEPROM_BYTES,
             "Size of T exceeds EEPROM size"

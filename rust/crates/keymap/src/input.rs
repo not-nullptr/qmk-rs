@@ -1,6 +1,10 @@
 use crate::state::{INPUT_HANDLER, InputEvent};
 use critical_section::with;
-use qmk::{KeyRecord, qk_keycode_defines, qmk_callback};
+use qmk::{
+    KeyRecord,
+    keys::{KC_F20, KC_F21},
+    qmk_callback,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -27,8 +31,8 @@ pub fn process_record_user(keycode: u16, record: *const KeyRecord) -> bool {
         input_handler.down(keycode);
 
         let event = match keycode {
-            qk_keycode_defines::KC_F20 => InputEvent::EncoderClick(0),
-            qk_keycode_defines::KC_F21 => InputEvent::EncoderClick(1),
+            KC_F20 => InputEvent::EncoderClick(0),
+            KC_F21 => InputEvent::EncoderClick(1),
             _ => return true,
         };
 

@@ -7,8 +7,8 @@ use crate::{
     config::PageTransition,
     page::{Page as _, RenderInfo},
     pages::{
-        Actions, ClockPage, DitherTransition, DoomTransition, ScaleTransition, SlideTransition,
-        TRANSITION_TYPE, TransitionHandler,
+        Actions, ClockPage, DitherTransition, DoomTransition, NoneTransition, ScaleTransition,
+        SlideTransition, TRANSITION_TYPE, TransitionHandler,
     },
     state::{INPUT_HANDLER, PAGE},
 };
@@ -198,6 +198,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
             PageTransition::Scale => Some(Box::new(ScaleTransition::new(new_page))),
             PageTransition::Slide => Some(Box::new(SlideTransition::new(new_page))),
             PageTransition::Doom => Some(Box::new(DoomTransition::new(new_page))),
+            PageTransition::None => Some(Box::new(NoneTransition::new(new_page))),
         };
         IS_TRANSITIONING.store(true, Ordering::SeqCst);
         drop(transitioning);

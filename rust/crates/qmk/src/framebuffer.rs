@@ -605,4 +605,8 @@ impl Framebuffer {
             }
         }
     }
+
+    pub fn clear(&mut self) {
+        self.framebuffer = [0; Screen::OLED_DISPLAY_SIZE];
+    }
 }

@@ -8,7 +8,7 @@ use core::cell::RefCell;
 use core::prelude::rust_2024::*;
 use critical_section::Mutex;
 use once_cell::sync::Lazy;
-use qmk::qk_keycode_defines;
+use qmk::keys::{KC_F20, KC_F21};
 
 pub struct InputHandler {
     events: Vec<InputEvent>,
@@ -71,9 +71,9 @@ impl InputHandler {
     }
 
     pub fn down(&mut self, key: u32) {
-        if key == qk_keycode_defines::KC_F20 {
+        if key == KC_F20 {
             self.left_encoder_down = true;
-        } else if key == qk_keycode_defines::KC_F21 {
+        } else if key == KC_F21 {
             self.right_encoder_down = true;
         } else if !self.keys.contains(&key) {
             self.keys.push(key);
@@ -81,9 +81,9 @@ impl InputHandler {
     }
 
     pub fn up(&mut self, key: u32) {
-        if key == qk_keycode_defines::KC_F20 {
+        if key == KC_F20 {
             self.left_encoder_down = false;
-        } else if key == qk_keycode_defines::KC_F21 {
+        } else if key == KC_F21 {
             self.right_encoder_down = false;
         } else if let Some(index) = self.keys.iter().position(|&k| k == key) {
             self.keys.remove(index);

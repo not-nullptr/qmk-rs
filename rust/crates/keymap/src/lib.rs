@@ -13,6 +13,7 @@ mod heap;
 mod image;
 mod init;
 mod input;
+mod keymap;
 mod page;
 mod pages;
 mod random;

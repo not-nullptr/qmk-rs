@@ -1,3 +1,10 @@
+mod keymap;
+
+use std::collections::HashSet;
+use std::fs;
+
+use keymap::KeyboardDefinition;
+use keymap::Keymap;
 use proc_macro2::Span;
 use qmk_callback_parsing::QmkCallback;
 use qmk_callback_parsing::Signature;
@@ -134,4 +141,135 @@ pub fn qmk_callback(
         .insert(0, syn::parse2(arg_types).unwrap());
     // convert function back to TokenStream
     function.into_token_stream().into()
+}
+
+/// # Keymap
+///
+/// This macro is used to define the keymap. Use as follows:
+/// ```rust
+/// use qmk_macro::keymap;
+///
+/// keymap! {
+///     "sofle/rev1",
+///     {
+///         KC_NO, KC_NO, KC_NO, // ...
+///     }
+/// }
+/// ```
+#[proc_macro]
+pub fn keymap(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let keymap = parse_macro_input!(input as Keymap);
+    let keyboard_definition =
+        fs::read_to_string(format!("../keyboards/{}/keyboard.json", keymap.keeb))
+            .unwrap_or_else(|_| panic!("Failed to read keyboard definition for {}", keymap.keeb));
+
+    let keyboard_definition: KeyboardDefinition = serde_json::from_str(&keyboard_definition)
+        .unwrap_or_else(|_| panic!("Failed to parse keyboard definition for {}", keymap.keeb));
+
+    let matrix_map = keyboard_definition
+        .layouts
+        .get("LAYOUT")
+        .unwrap_or_else(|| {
+            panic!(
+                "Failed to find layout LAYOUT in keyboard definition for {}",
+                keymap.keeb
+            )
+        });
+
+    let key_macro_input = matrix_map
+        .layout
+        .iter()
+        .enumerate()
+        .map(|(i, _)| Ident::new(&format!("k{i}"), Span::call_site()))
+        .map(|i| {
+            quote! {
+                $ #i:ident
+            }
+        })
+        .collect::<Vec<_>>();
+    let key_macro_input = quote! {
+        #(#key_macro_input),*
+    };
+
+    // find the number of unique matrix row values, ie matrix_map.layout[0].matrix[0]
+
+    let matrix_rows = matrix_map
+        .layout
+        .iter()
+        .map(|l| l.matrix[0])
+        .collect::<HashSet<_>>()
+        .len();
+
+    let matrix_cols = matrix_map
+        .layout
+        .iter()
+        .map(|l| l.matrix[1])
+        .collect::<HashSet<_>>()
+        .len();
+
+    let mut key_macro_idents =
+        vec![vec![Ident::new("KC_NO", Span::call_site()); matrix_cols]; matrix_rows];
+
+    for (i, key) in matrix_map.layout.iter().enumerate() {
+        let col = key.matrix[1] as usize;
+        let row = key.matrix[0] as usize;
+        let key_macro_ident = Ident::new(&format!("k{i}"), Span::call_site());
+        key_macro_idents[row][col] = key_macro_ident;
+    }
+
+    let key_macro_body = quote! {
+        [
+            #(
+                [
+                    #(::qmk::key!($#key_macro_idents)),*
+                ]
+            ),*
+        ]
+    };
+
+    let keymap_macro = quote! {
+        #[allow(unused_macros)]
+        macro_rules! layer_internal {
+            (
+                #key_macro_input
+            ) => {
+                #key_macro_body
+            }
+        }
+    };
+
+    let num_layers = keymap.layers.len();
+
+    let macro_invocations = keymap
+        .layers
+        .into_iter()
+        .map(|layer| {
+            let keys = layer.keys;
+            quote! {
+                layer_internal!(
+                    #(
+                        #keys
+                    ),*
+                )
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let output = quote! {
+        #[unsafe(no_mangle)]
+        #[allow(non_upper_case_globals)]
+        static keymaps: [[[u16; #matrix_cols]; #matrix_rows]; #num_layers] = {
+            #keymap_macro
+
+            [
+                #(
+                    #macro_invocations
+                ),*
+            ]
+        };
+    };
+
+    eprintln!("{}", output.to_token_stream());
+
+    output.into()
 }

@@ -13,3 +13,5 @@ proc-macro2 = "1.0.94"
 quote = "1.0.40"
 syn = { version = "2.0.100", features = ["full"] }
 qmk-callback-parsing = { path = "../qmk_callback_parsing" }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"

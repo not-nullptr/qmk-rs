@@ -20,7 +20,6 @@
 
 #define CUSTOM_LAYER_READ //if you remove this it causes issues - needs better guarding
 
-
 #define QUICK_TAP_TERM 0
 #ifdef TAPPING_TERM
     #undef TAPPING_TERM
@@ -43,4 +42,4 @@
     #define RGBLIGHT_VAL_STEP 17
 #endif
 // ### NULLPTR'S STUFF BEGINS HERE -- DO NOT TOUCH! DON'T EVEN MODIFY THIS COMMENT!
-#define EECONFIG_USER_DATA_SIZE 4
+#define EECONFIG_USER_DATA_SIZE 5

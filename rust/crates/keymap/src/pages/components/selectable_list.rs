@@ -61,6 +61,7 @@ impl SelectableList {
                         should_return = true;
                     }
                 }
+                _ => {}
             }
         }
         for (i, option) in options.iter().enumerate() {

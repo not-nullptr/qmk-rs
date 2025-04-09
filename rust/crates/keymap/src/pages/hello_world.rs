@@ -53,6 +53,8 @@ impl Page for HelloWorldPage {
                         self.cursor.1 -= 1;
                     }
                 }
+
+                _ => {}
             }
         }
 

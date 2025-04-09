@@ -33,11 +33,16 @@ pub fn process_record_user(keycode: u16, record: *const KeyRecord) -> bool {
         let event = match keycode {
             KC_F20 => InputEvent::EncoderClick(0),
             KC_F21 => InputEvent::EncoderClick(1),
-            _ => return true,
+            _ => InputEvent::KeyDown(keycode),
         };
 
+        if matches!(&event, InputEvent::EncoderClick(_)) {
+            input_handler.handle_event(event);
+            return false;
+        }
+
         input_handler.handle_event(event);
-        false
+        true
     })
 }
 

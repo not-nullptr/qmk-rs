@@ -95,6 +95,7 @@ impl InputHandler {
 pub enum InputEvent {
     EncoderScroll(u8, bool),
     EncoderClick(u8),
+    KeyDown(u32),
 }
 
 pub static INPUT_HANDLER: Lazy<Mutex<RefCell<InputHandler>>> =

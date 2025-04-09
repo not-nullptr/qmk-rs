@@ -67,6 +67,7 @@ impl Page for ColourPage {
                         }
                     }
                 }
+                _ => {}
             }
         }
 

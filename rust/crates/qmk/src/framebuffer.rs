@@ -577,6 +577,46 @@ impl Framebuffer {
         }
     }
 
+    pub fn draw_image_inverted<T, U, const M: usize>(
+        &mut self,
+        offset_x: T,
+        offset_y: U,
+        image: &QmkImage<M>,
+    ) where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+    {
+        let offset_x = offset_x.to_i16().unwrap_or(0);
+        let offset_y = offset_y.to_i16().unwrap_or(0);
+
+        let img_pages = (image.height as usize).div_ceil(8);
+        let display_width = Screen::OLED_DISPLAY_WIDTH;
+
+        for x in 0..image.width as usize {
+            for y in 0..image.height as usize {
+                let src_page = y / 8;
+                let src_bit = 7 - (y % 8);
+                let src_index = x * img_pages + src_page;
+
+                let pixel_on = (image.bytes[src_index] >> src_bit) & 1;
+
+                let dest_x = offset_x as usize + x;
+                let dest_y = offset_y as usize + y;
+                let dest_page = dest_y / 8;
+                let dest_bit = dest_y % 8;
+                let dest_index = dest_page * display_width + dest_x;
+
+                if dest_index < self.framebuffer.len() && dest_x < display_width {
+                    if pixel_on == 1 {
+                        self.framebuffer[dest_index] &= !(1 << dest_bit);
+                    } else {
+                        self.framebuffer[dest_index] |= 1 << dest_bit;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn dither<T>(&mut self, progress: T)
     where
         T: Num + ToPrimitive,

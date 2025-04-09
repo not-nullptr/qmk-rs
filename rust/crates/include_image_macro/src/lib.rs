@@ -167,7 +167,7 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
         let byte_count = bytes.len();
 
         images_tokens.push(quote! {
-            include_image_structs::QmkImage::<#byte_count> {
+            ::include_image::QmkImage::<#byte_count> {
                 width: #width,
                 height: #height,
                 bytes: [#(#byte_tokens),*],
@@ -182,7 +182,7 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
     //     .fold(quote! {}, |acc, new| quote! {#acc #new});
 
     let output = quote! {
-        pub const #name_ident: [include_image_structs::QmkImage<#all_lens>; #images_tokens_len] = [
+        pub const #name_ident: [::include_image::QmkImage<#all_lens>; #images_tokens_len] = [
             #(#images_tokens),*
         ];
     };

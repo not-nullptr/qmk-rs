@@ -1,3 +1,3 @@
 cd crates/keymap
-wasm-pack build && rm -rf /mnt/c/Users/nullptr/qmk-wasm/src/lib/pkg && cp -r pkg /mnt/c/Users/nullptr/qmk-wasm/src/lib
+wasm-pack build && rm -rf /mnt/c/Users/nullptr/qmk-wasm/src/lib/pkg && echo "export function destroy() { wasm = undefined; __wbg_init.__wbindgen_wasm_module = undefined; cachedFloat32Memory0 = null; cachedFloat64Memory0 = null; cachedInt32Memory0 = null; cachedUint32Memory0 = null; cachedUint8ArrayMemory0 = null; }" >> pkg/keymap_bg.js && echo "export function destroy(): void;" >> pkg/keymap.d.ts && cp -r pkg /mnt/c/Users/nullptr/qmk-wasm/src/lib
 cd ../..

@@ -1,6 +1,6 @@
 use crate::{
     config::SETTINGS,
-    image::CREDIT,
+    image::{BOOT, CREDIT},
     page::{Page, RenderInfo},
 };
 use alloc::boxed::Box;
@@ -13,17 +13,37 @@ pub struct StartupPage {
     tick: u8,
 }
 
-fn map_value(n: u8) -> u8 {
-    match n {
-        0..=15 => 15 - n,
-        16..=29 => 0,
-        30..=44 => n - 30,
-        _ => 15,
-    }
-}
-
 impl Page for StartupPage {
+    // fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
+    //     if self.tick == 0 {
+    //         let skip = with(|cs| {
+    //             let config = SETTINGS.borrow_ref(cs);
+    //             config.startup_skip
+    //         });
+
+    //         if skip {
+    //             return Some(Box::new(HomePage::default()));
+    //         }
+    //     }
+
+    //     if self.tick > 44 {
+    //         return Some(Box::new(HomePage::default()));
+    //     }
+    //     self.tick = self.tick.wrapping_add(1);
+
+    //     renderer.framebuffer.draw_image(0, 0, &CREDIT);
+    //     let mapped = map_value(self.tick);
+    //     let x = if self.tick >= 30 { 0 } else { 64 };
+
+    //     renderer
+    //         .framebuffer
+    //         .scale_around(x, 64, 64 - (mapped * 6), 128);
+    //     renderer.framebuffer.dither(mapped);
+    //     None
+    // }
+
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
+        const SLOW_FAC: f32 = 2.5;
         if self.tick == 0 {
             let skip = with(|cs| {
                 let config = SETTINGS.borrow_ref(cs);
@@ -35,12 +55,37 @@ impl Page for StartupPage {
             }
         }
 
-        if self.tick > 44 {
-            return Some(Box::new(HomePage::default()));
+        let lim = (BOOT.len() as f32 * SLOW_FAC) as u8;
+        let frame = (self.tick as f32 / SLOW_FAC) as usize;
+        const DELAY: u8 = 24;
+
+        if self.tick >= lim {
+            if self.tick >= lim + DELAY {
+                renderer.framebuffer.draw_image_inverted(0, 0, &CREDIT);
+                return Some(Box::new(HomePage::default()));
+            }
+
+            self.tick = self.tick.wrapping_add(1);
+        } else {
+            renderer
+                .framebuffer
+                .draw_image(0, 0, &BOOT[frame % BOOT.len()]);
         }
+
+        if frame >= 30 {
+            let y = match frame {
+                30 => -128 + 3,
+                31 => -128 + 16,
+                32 => -128 + 50,
+                33 => -128 + 92,
+                _ => 0,
+            };
+
+            renderer.framebuffer.draw_image_inverted(0, y, &CREDIT);
+        }
+
         self.tick = self.tick.wrapping_add(1);
-        renderer.framebuffer.draw_image(0, 0, &CREDIT);
-        renderer.framebuffer.dither(map_value(self.tick));
+
         None
     }
 }

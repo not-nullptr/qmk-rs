@@ -95,7 +95,7 @@ tags
 *.otf
 
 *.png
-!rust/images/*.png
+!rust/images/**/*.png
 
 # Things Travis sees
 /.vs

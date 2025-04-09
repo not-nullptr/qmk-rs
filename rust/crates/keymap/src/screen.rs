@@ -65,8 +65,10 @@ fn render_left() -> (Actions, Framebuffer) {
     TICK.store(tick.wrapping_add(1), Ordering::SeqCst);
     with(|cs| {
         let mut framebuffer = Framebuffer::default();
-        let actions = draw_screen(&mut framebuffer, cs);
-        draw_border(&mut framebuffer);
+        let (actions, should_draw_border) = draw_screen(&mut framebuffer, cs);
+        if should_draw_border {
+            draw_border(&mut framebuffer)
+        };
         (actions, framebuffer)
     })
 }
@@ -159,7 +161,10 @@ fn draw_border(framebuffer: &mut Framebuffer) {
     }
 }
 
-fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dyn FnOnce()>> {
+fn draw_screen(
+    framebuffer: &mut Framebuffer,
+    cs: CriticalSection,
+) -> (Vec<Box<dyn FnOnce()>>, bool) {
     let tick = TICK.load(Ordering::SeqCst);
     let mut input = INPUT_HANDLER.borrow_ref_mut(cs);
     let mut actions = alloc::vec![];
@@ -173,7 +178,7 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
 
     let mut transitioning = TRANSITION.borrow_ref_mut(cs);
     if let Some(mut transition) = transitioning.take() {
-        if transition.render(&mut info) {
+        let should_draw_border = if transition.render(&mut info) {
             let new_page = transition.take_page();
             let mut page = PAGE.borrow_ref_mut(cs);
             *page = new_page;
@@ -181,11 +186,15 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
             drop(input);
             drop(transitioning);
             IS_TRANSITIONING.store(false, Ordering::SeqCst);
-            actions.extend(draw_screen(framebuffer, cs));
+            let (new_actions, should_draw_border) = draw_screen(framebuffer, cs);
+            actions.extend(new_actions);
+            should_draw_border
         } else {
+            let should_draw_border = transition.page().should_draw_border();
             *transitioning = Some(transition);
-        }
-        return actions;
+            should_draw_border
+        };
+        return (actions, should_draw_border);
     }
 
     let mut page = PAGE.borrow_ref_mut(cs);
@@ -202,9 +211,11 @@ fn draw_screen(framebuffer: &mut Framebuffer, cs: CriticalSection) -> Vec<Box<dy
         };
         IS_TRANSITIONING.store(true, Ordering::SeqCst);
         drop(transitioning);
-        actions.extend(draw_screen(framebuffer, cs));
-        return actions;
+        let (new_actions, should_draw_border) = draw_screen(framebuffer, cs);
+        actions.extend(new_actions);
+        return (actions, should_draw_border);
     }
 
-    actions
+    let should_draw_border = page.should_draw_border();
+    (actions, should_draw_border)
 }

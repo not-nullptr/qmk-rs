@@ -72,12 +72,12 @@ impl Page for StartupPage {
                 .draw_image(0, 0, &BOOT[frame % BOOT.len()]);
         }
 
-        if frame >= 30 {
+        if frame >= 23 {
             let y = match frame {
-                30 => -128 + 3,
-                31 => -128 + 16,
-                32 => -128 + 50,
-                33 => -128 + 92,
+                23 => -128 + 3,
+                24 => -128 + 16,
+                25 => -128 + 50,
+                26 => -128 + 92,
                 _ => 0,
             };
 
@@ -87,5 +87,9 @@ impl Page for StartupPage {
         self.tick = self.tick.wrapping_add(1);
 
         None
+    }
+
+    fn should_draw_border(&mut self) -> bool {
+        false
     }
 }

@@ -49,6 +49,10 @@ impl TransitionHandler for SlideTransition {
     fn take_page(self: Box<Self>) -> Box<dyn Page> {
         self.to
     }
+
+    fn page(&mut self) -> &mut Box<dyn Page> {
+        &mut self.to
+    }
 }
 
 fn ease_in_out_expo(x: f32) -> f32 {

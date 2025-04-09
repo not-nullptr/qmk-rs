@@ -23,4 +23,8 @@ impl TransitionHandler for NoneTransition {
     fn take_page(self: Box<Self>) -> Box<dyn Page> {
         self.to
     }
+
+    fn page(&mut self) -> &mut Box<dyn Page> {
+        &mut self.to
+    }
 }

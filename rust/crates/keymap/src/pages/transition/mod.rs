@@ -22,4 +22,5 @@ pub trait TransitionHandler: Send + Sync {
         Self: Sized;
     fn render(&mut self, renderer: &mut RenderInfo) -> bool;
     fn take_page(self: Box<Self>) -> Box<dyn Page>;
+    fn page(&mut self) -> &mut Box<dyn Page>;
 }

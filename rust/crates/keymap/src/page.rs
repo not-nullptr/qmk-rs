@@ -8,6 +8,9 @@ pub trait Page: Send + Sync {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>>;
     #[allow(unused_variables)]
     fn init(&mut self, renderer: &mut RenderInfo) {}
+    fn should_draw_border(&mut self) -> bool {
+        true
+    }
 }
 
 pub struct RenderInfo<'a> {

@@ -2,7 +2,7 @@ use core::sync::atomic::Ordering;
 
 use alloc::format;
 use alloc::string::String;
-use alloc::vec::Vec;
+use include_image::include_image;
 
 use crate::page::{Page, RenderInfo};
 use crate::screen::TICK;
@@ -14,26 +14,94 @@ use qmk::screen::Screen;
 
 use super::HomePage;
 
-const WINDOW_TICKS: u32 = 20 * 5;
+const WINDOW_TICKS: u32 = 20 * 2;
 const WPM_HISTORY_SIZE: usize = 20;
+const IDLE_TICKS: u32 = 10;
+
+#[derive(Default, PartialEq, Eq)]
+enum BongoCatImage {
+    #[default]
+    Idle,
+    Left,
+    Right,
+}
 
 #[derive(Default)]
+pub struct BongoCat {
+    unprocessed_key: bool,
+    tick: u32,
+    image: BongoCatImage,
+    last_key_tick: u32,
+}
+
+impl BongoCat {
+    fn key_press(&mut self) {
+        self.unprocessed_key = true;
+        self.last_key_tick = self.tick;
+    }
+
+    fn draw(&mut self, renderer: &mut RenderInfo) {
+        include_image!("./images/bongo_idle.png");
+        include_image!("./images/bongo_left.png");
+        include_image!("./images/bongo_right.png");
+
+        if self.unprocessed_key {
+            self.image = if self.image == BongoCatImage::Left {
+                BongoCatImage::Right
+            } else {
+                BongoCatImage::Left
+            };
+
+            self.unprocessed_key = false;
+        } else if self.tick - self.last_key_tick > IDLE_TICKS {
+            self.image = BongoCatImage::Idle;
+        }
+
+        let image = match self.image {
+            BongoCatImage::Idle => &BONGO_IDLE,
+            BongoCatImage::Left => &BONGO_LEFT,
+            BongoCatImage::Right => &BONGO_RIGHT,
+        };
+
+        let x = (Screen::OLED_DISPLAY_WIDTH as u8 - image.width) / 2;
+        let y = 36;
+
+        renderer.framebuffer.draw_image(x, y, image);
+
+        self.tick = self.tick.wrapping_add(1);
+    }
+}
+
 pub struct InfoPage {
     key_times: VecDeque<u32>,
-    wpm_history: Vec<f32>,
+    wpm_history: [f32; WPM_HISTORY_SIZE],
     tick: u32,
+    bongo_cat: BongoCat,
+}
+
+impl Default for InfoPage {
+    fn default() -> Self {
+        Self {
+            key_times: VecDeque::new(),
+            wpm_history: [0.0; WPM_HISTORY_SIZE],
+            tick: 0,
+            bongo_cat: BongoCat::default(),
+        }
+    }
 }
 
 impl Page for InfoPage {
     fn render(&mut self, renderer: &mut RenderInfo) -> Option<Box<dyn Page>> {
         if self.wpm_history.len() < WPM_HISTORY_SIZE {
-            self.wpm_history = alloc::vec![0.0; WPM_HISTORY_SIZE];
+            self.wpm_history = [0.0; WPM_HISTORY_SIZE];
         }
 
         while let Some(event) = renderer.input.poll() {
             let InputEvent::KeyDown(_) = event else {
                 return Some(Box::new(HomePage::default()));
             };
+
+            self.bongo_cat.key_press();
             self.key_times.push_back(self.tick);
         }
 
@@ -54,11 +122,8 @@ impl Page for InfoPage {
             0.0
         };
 
-        // Update the history on every tick for increased responsiveness.
-        self.wpm_history.push(wpm);
-        if self.wpm_history.len() > WPM_HISTORY_SIZE {
-            self.wpm_history.remove(0);
-        }
+        self.wpm_history.rotate_left(1);
+        self.wpm_history[WPM_HISTORY_SIZE - 1] = wpm;
 
         renderer
             .framebuffer
@@ -68,6 +133,7 @@ impl Page for InfoPage {
             .draw_text_centered(32, 18, self.uptime(), false);
 
         self.draw_graph(renderer);
+        self.bongo_cat.draw(renderer);
 
         self.tick = self.tick.wrapping_add(1);
 

@@ -17,3 +17,4 @@ pub mod sys;
 use qmk_sys::keyrecord_t;
 pub type KeyRecord = keyrecord_t;
 pub use qmk_sys::keyevent_type_t;
+pub use qmk_sys::oled_rotation_t as OledRotation;

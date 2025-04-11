@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use serde::Deserialize;
-use syn::{Ident, Token, braced, parse::Parse};
+use syn::{Expr, Ident, Token, braced, parse::Parse};
 
 #[derive(Debug)]
 pub struct Keymap {
@@ -39,14 +39,14 @@ impl Parse for Keymap {
 
 #[derive(Debug)]
 pub struct Layer {
-    pub keys: Vec<Ident>,
+    pub keys: Vec<Expr>,
 }
 
 impl Parse for Layer {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut keys = Vec::new();
         while !input.is_empty() {
-            let key: Ident = input.parse()?;
+            let key: Expr = input.parse()?;
             keys.push(key);
             if input.peek(Token![,]) {
                 input.parse::<Token![,]>()?;

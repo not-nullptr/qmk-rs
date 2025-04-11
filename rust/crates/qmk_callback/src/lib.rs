@@ -1,6 +1,7 @@
 use glob::glob;
 use qmk::EEPROM_BYTES;
 use qmk_callback_parsing::{QmkCallback, Signature};
+use quote::ToTokens;
 use std::fs;
 use syn::parse::Parse;
 
@@ -19,6 +20,20 @@ pub fn write_glue_code(path: impl Into<String>) {
 
         let file = fs::read_to_string(entry).unwrap();
         let file = syn::parse_file(&file).unwrap();
+
+        // look for a constant named "NUM_LAYERS"
+        let mut num_layers = None;
+        for item in &file.items {
+            if let syn::Item::Const(constant) = item {
+                if constant.ident == "NUM_LAYERS" {
+                    if let syn::Expr::Lit(lit) = &*constant.expr {
+                        if let syn::Lit::Int(int) = &lit.lit {
+                            num_layers = int.base10_parse::<u8>().ok();
+                        }
+                    }
+                }
+            }
+        }
 
         let fn_attributes = file
             .items
@@ -48,9 +63,16 @@ pub fn write_glue_code(path: impl Into<String>) {
         for attr in fn_attributes {
             attributes.push(attr);
         }
+
+        if let Some(num_layers) = num_layers {
+            attributes.push(format!(
+                "const extern uint16_t PROGMEM keymaps[{num_layers}][MATRIX_ROWS][MATRIX_COLS];"
+            ));
+        }
     }
 
     let c_file = attributes.join("\n\n");
+
     fs::write(&path, c_file).unwrap();
 
     let mut dir = path.split("/").collect::<Vec<_>>();

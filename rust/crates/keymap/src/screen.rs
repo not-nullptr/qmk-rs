@@ -16,13 +16,18 @@ use alloc::{boxed::Box, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
 #[cfg(not(target_arch = "wasm32"))]
 use qmk::qmk_callback;
-use qmk::{framebuffer::Framebuffer, keyboard::Keyboard, screen::Screen};
+use qmk::{OledRotation, framebuffer::Framebuffer, keyboard::Keyboard, screen::Screen};
 
 pub static TICK: AtomicU32 = AtomicU32::new(0);
 pub static TRANSITION: Mutex<RefCell<Option<Box<dyn TransitionHandler>>>> =
     Mutex::new(RefCell::new(None));
 pub static IS_TRANSITIONING: AtomicBool = AtomicBool::new(false);
 static RIGHT_HAND_PAGE: Mutex<RefCell<Option<ClockPage>>> = Mutex::new(RefCell::new(None));
+
+#[qmk_callback((oled_rotation_t) -> oled_rotation_t)]
+fn oled_init_user(_: OledRotation::Type) -> OledRotation::Type {
+    OledRotation::OLED_ROTATION_0
+}
 
 #[cfg(not(target_arch = "wasm32"))]
 #[qmk_callback(() -> bool)]

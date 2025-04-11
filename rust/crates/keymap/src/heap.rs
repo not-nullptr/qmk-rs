@@ -2,7 +2,7 @@ use embedded_alloc::LlffHeap;
 use qmk::qmk_callback;
 #[cfg(not(target_arch = "wasm32"))]
 use rp2040_hal as _;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(target_arch = "arm")]
 use rp2040_panic_usb_boot as _;
 
 const HEAP_SIZE: usize = 64000;

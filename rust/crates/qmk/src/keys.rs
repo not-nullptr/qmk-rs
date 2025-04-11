@@ -1,4 +1,6 @@
+#[allow(ambiguous_glob_reexports)]
 pub use qmk_sys::qk_keycode_defines::*;
+pub use qmk_sys::qk_keycode_ranges::*;
 
 pub const QK_LCTL: u16 = 0x0100;
 pub const QK_LSFT: u16 = 0x0200;
@@ -12,20 +14,54 @@ pub const QK_RGUI: u16 = 0x1800;
 
 pub use qmk_macro::keymap;
 
+/// Gets a keycode from its name with no path, automatically casting it to u16.
 #[macro_export]
 macro_rules! key {
-    ($key:ident) => {
-        $crate::keys::$key as u16
-    };
     ($(_)*) => {
         $crate::key!(KC_NO)
     };
+
+    ($key:ident) => {
+        $crate::keys::$key as u16
+    };
+
+    ($key:expr) => {
+        $key as u16
+    };
 }
 
+/// Gets the uppercase equivalent of a keycode.
 #[macro_export]
 macro_rules! s {
     ($e:expr) => {
         (QK_LSFT | ($e as u16))
+    };
+
+    ($key:ident) => {
+        (QK_LSFT | ($key as u16))
+    };
+}
+
+/// MO(layer) from QMK
+#[macro_export]
+macro_rules! mo {
+    ($layer:expr) => {
+        ($crate::keys::QK_MOMENTARY as u16 | (($layer as u16) & 0x1F))
+    };
+
+    ($layer:ident) => {
+        ($crate::keys::QK_MOMENTARY as u16 | (($layer as u16) & 0x1F))
+    };
+}
+
+#[macro_export]
+macro_rules! c {
+    ($key:ident) => {
+        ($crate::keys::QK_LCTL | ($key as u16))
+    };
+
+    ($key:expr) => {
+        ($crate::keys::QK_LCTL | ($key as u16))
     };
 }
 

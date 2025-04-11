@@ -11,6 +11,9 @@ use qmk_callback_parsing::Signature;
 use quote::ToTokens;
 use quote::quote;
 use syn::AttrStyle;
+use syn::Expr;
+use syn::ExprLit;
+use syn::LitInt;
 use syn::{
     Attribute, Ident, LitStr, MacroDelimiter, Meta, MetaList, Path, Token, Visibility,
     parse_macro_input, punctuated::Punctuated, token::Paren,
@@ -159,9 +162,14 @@ pub fn qmk_callback(
 #[proc_macro]
 pub fn keymap(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let keymap = parse_macro_input!(input as Keymap);
-    let keyboard_definition =
-        fs::read_to_string(format!("../keyboards/{}/keyboard.json", keymap.keeb))
-            .unwrap_or_else(|_| panic!("Failed to read keyboard definition for {}", keymap.keeb));
+    let keyboard_definition = fs::read_to_string(format!(
+        "../keyboards/{}/keyboard.json",
+        keymap.keeb
+    ))
+    .unwrap_or_else(|_| {
+        fs::read_to_string(format!("../keyboards/{}/info.json", keymap.keeb))
+            .unwrap_or_else(|_| panic!("Failed to read keyboard definition for {}", keymap.keeb))
+    });
 
     let keyboard_definition: KeyboardDefinition = serde_json::from_str(&keyboard_definition)
         .unwrap_or_else(|_| panic!("Failed to parse keyboard definition for {}", keymap.keeb));
@@ -175,21 +183,6 @@ pub fn keymap(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 keymap.keeb
             )
         });
-
-    let key_macro_input = matrix_map
-        .layout
-        .iter()
-        .enumerate()
-        .map(|(i, _)| Ident::new(&format!("k{i}"), Span::call_site()))
-        .map(|i| {
-            quote! {
-                $ #i:ident
-            }
-        })
-        .collect::<Vec<_>>();
-    let key_macro_input = quote! {
-        #(#key_macro_input),*
-    };
 
     // find the number of unique matrix row values, ie matrix_map.layout[0].matrix[0]
 
@@ -207,66 +200,101 @@ pub fn keymap(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .collect::<HashSet<_>>()
         .len();
 
-    let mut key_macro_idents =
-        vec![vec![Ident::new("KC_NO", Span::call_site()); matrix_cols]; matrix_rows];
-
-    for (i, key) in matrix_map.layout.iter().enumerate() {
-        let col = key.matrix[1] as usize;
-        let row = key.matrix[0] as usize;
-        let key_macro_ident = Ident::new(&format!("k{i}"), Span::call_site());
-        key_macro_idents[row][col] = key_macro_ident;
-    }
-
-    let key_macro_body = quote! {
-        [
-            #(
-                [
-                    #(::qmk::key!($#key_macro_idents)),*
-                ]
-            ),*
-        ]
-    };
-
-    let keymap_macro = quote! {
-        #[allow(unused_macros)]
-        macro_rules! layer_internal {
-            (
-                #key_macro_input
-            ) => {
-                #key_macro_body
-            }
-        }
-    };
+    let mut layers = vec![];
 
     let num_layers = keymap.layers.len();
 
-    let macro_invocations = keymap
-        .layers
-        .into_iter()
+    for (x, layer) in keymap.layers.into_iter().enumerate() {
+        let mut key_idents = vec![
+            vec![
+                Expr::Lit(ExprLit {
+                    attrs: vec![],
+                    lit: syn::Lit::Int(LitInt::new("0u16", Span::call_site())),
+                });
+                matrix_cols
+            ];
+            matrix_rows
+        ];
+
+        for (i, key) in layer.keys.into_iter().enumerate() {
+            let Some(matrix_mapping) = matrix_map.layout.get(i).map(|m| m.matrix) else {
+                panic!(
+                    "Too many keys for {} in layer {x} (at key {i}, or '{}')",
+                    keymap.keeb,
+                    key.to_token_stream()
+                );
+            };
+            let col = matrix_mapping[1] as usize;
+            let row = matrix_mapping[0] as usize;
+            // key_idents[row][col] = key;
+            let Some(ident) = key_idents.get_mut(row).and_then(|r| r.get_mut(col)) else {
+                panic!(
+                    "Too many keys for {} in layer {x} (at key {i}, or '{}')",
+                    keymap.keeb,
+                    key.to_token_stream()
+                );
+            };
+
+            *ident = key;
+        }
+
+        layers.push(key_idents);
+    }
+
+    let layers_tokens = layers
+        .iter()
         .map(|layer| {
-            let keys = layer.keys;
+            let layer_tokens = layer
+                .iter()
+                .map(|row| {
+                    let row_tokens = row.chunks(matrix_rows).map(|keys| {
+                        // quote! {
+                        //     #(
+                        //         ::qmk::key!(#key)
+                        //     ),*
+                        // }
+                        let key_tokens = keys.iter().map(|key| {
+                            if key.to_token_stream().to_string().starts_with("CS_") {
+                                quote! {
+                                    #key
+                                }
+                            } else {
+                                quote! {
+                                    ::qmk::key!(#key)
+                                }
+                            }
+                        });
+
+                        quote! {
+                            #(#key_tokens),*
+                        }
+                    });
+                    quote! {
+                        [
+                            #(#row_tokens),*
+                        ]
+                    }
+                })
+                .collect::<Vec<_>>();
+
             quote! {
-                layer_internal!(
-                    #(
-                        #keys
-                    ),*
-                )
+                [
+                    #(#layer_tokens),*
+                ]
             }
         })
         .collect::<Vec<_>>();
 
+    let layers = quote! {
+        [
+            #(#layers_tokens),*
+        ]
+    };
+
     let output = quote! {
         #[unsafe(no_mangle)]
         #[allow(non_upper_case_globals)]
-        static keymaps: [[[u16; #matrix_cols]; #matrix_rows]; #num_layers] = {
-            #keymap_macro
-
-            [
-                #(
-                    #macro_invocations
-                ),*
-            ]
-        };
+        static keymaps: [[[u16; #matrix_cols]; #matrix_rows]; #num_layers] = #layers;
     };
 
     output.into()

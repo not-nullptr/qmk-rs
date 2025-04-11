@@ -1,5 +1,5 @@
 use super::{
-    ColourPage, DebugPage, HelloWorldPage, InfoPage, SettingsPage,
+    ColourPage, DebugPage, InfoPage, SettingsPage,
     components::{ListConfig, SelectableList},
 };
 use crate::{
@@ -9,7 +9,6 @@ use crate::{
 use alloc::boxed::Box;
 
 define_options! {
-    "Spring", spring => |_| Some(HelloWorldPage::default()),
     "Colour", colour => |_| Some(ColourPage::default()),
     "Settings", settings => |_| Some(SettingsPage::default()),
     "Info", info => |_| Some(InfoPage::default()),

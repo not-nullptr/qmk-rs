@@ -14,7 +14,6 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use critical_section::{CriticalSection, Mutex, with};
-#[cfg(not(target_arch = "wasm32"))]
 use qmk::qmk_callback;
 use qmk::{OledRotation, framebuffer::Framebuffer, keyboard::Keyboard, screen::Screen};
 

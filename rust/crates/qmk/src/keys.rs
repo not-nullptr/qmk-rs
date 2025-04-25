@@ -54,6 +54,30 @@ macro_rules! mo {
     };
 }
 
+/// TG(layer) from QMK
+#[macro_export]
+macro_rules! tg {
+    ($layer:expr) => {
+        ($crate::keys::QK_TOGGLE_LAYER as u16 | (($layer as u16) & 0x1F))
+    };
+
+    ($layer:ident) => {
+        ($crate::keys::QK_TOGGLE_LAYER as u16 | (($layer as u16) & 0x1F))
+    };
+}
+
+/// TO(layer) from QMK
+#[macro_export]
+macro_rules! to {
+    ($layer:expr) => {
+        ($crate::keys::QK_TO as u16 | (($layer as u16) & 0x1F))
+    };
+
+    ($layer:ident) => {
+        ($crate::keys::QK_TO as u16 | (($layer as u16) & 0x1F))
+    };
+}
+
 #[macro_export]
 macro_rules! c {
     ($key:ident) => {

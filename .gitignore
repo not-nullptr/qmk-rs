@@ -123,4 +123,3 @@ via*.json
 /keyboards/**/keymaps/via/*
 /keyboards/**/keymaps/vial/*
 rust/Cargo.lock
-panic.sh

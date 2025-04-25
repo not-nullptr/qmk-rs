@@ -48,21 +48,8 @@ uint32_t timer_elapsed32(uint32_t last);
 #define timer_expired(current, future) ((uint16_t)(current - future) < UINT16_MAX / 2)
 #define timer_expired32(current, future) ((uint32_t)(current - future) < UINT32_MAX / 2)
 
-// Use an appropriate timer integer size based on architecture (16-bit will overflow sooner)
-#if FAST_TIMER_T_SIZE < 32
-#    define TIMER_DIFF_FAST(a, b) TIMER_DIFF_16(a, b)
-#    define timer_expired_fast(current, future) timer_expired(current, future)
-typedef uint16_t fast_timer_t;
-fast_timer_t inline timer_read_fast(void) {
-    return timer_read();
-}
-fast_timer_t inline timer_elapsed_fast(fast_timer_t last) {
-    return timer_elapsed(last);
-}
-#else
-#    define TIMER_DIFF_FAST(a, b) TIMER_DIFF_32(a, b)
-#    define timer_expired_fast(current, future) timer_expired32(current, future)
 typedef uint32_t fast_timer_t;
+#ifndef NULLPTR_BINDGEN
 fast_timer_t inline timer_read_fast(void) {
     return timer_read32();
 }

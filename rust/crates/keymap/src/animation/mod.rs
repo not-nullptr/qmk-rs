@@ -11,13 +11,68 @@ use micromath::F32Ext;
 
 #[derive(Default)]
 pub struct Spring {
+    spring_inner: SpringInner,
+    current: f32,
+    velocity: f32,
+    target: f32,
+}
+
+impl Spring {
+    pub fn new(
+        delta_time: DeltaTime,
+        angular_frequency: AngularFrequency,
+        damping_ratio: DampingRatio,
+    ) -> Self {
+        let spring_inner = SpringInner::new(delta_time, angular_frequency, damping_ratio);
+
+        Self {
+            spring_inner,
+            current: 0.0,
+            velocity: 0.0,
+            target: 0.0,
+        }
+    }
+
+    pub fn set(&mut self, target: f32) {
+        self.target = target;
+    }
+
+    pub fn current(&self) -> f32 {
+        self.current
+    }
+
+    pub fn velocity(&self) -> f32 {
+        self.velocity
+    }
+
+    pub fn set_velocity(&mut self, velocity: f32) {
+        self.velocity = velocity;
+    }
+
+    pub fn update(&mut self) {
+        let (pos, vel) = self
+            .spring_inner
+            .update(self.current, self.velocity, self.target);
+
+        self.current = pos;
+        self.velocity = vel;
+
+        if (self.current - self.target).abs() < EPSILON {
+            self.current = self.target;
+            self.velocity = 0.0;
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct SpringInner {
     pos_pos_coef: f32,
     pos_vel_coef: f32,
     vel_pos_coef: f32,
     vel_vel_coef: f32,
 }
 
-const EPSILON: f32 = 0.00000001;
+const EPSILON: f32 = 0.05;
 
 pub fn fps(n: u64) -> f32 {
     let duration = Duration::new(0, n as u32).as_nanos();
@@ -34,13 +89,13 @@ pub struct AngularFrequency(pub f32);
 #[derive(Clone)]
 pub struct DampingRatio(pub f32);
 
-impl Spring {
+impl SpringInner {
     pub fn new(
         delta_time: DeltaTime,
         mut angular_frequency: AngularFrequency,
         mut damping_ratio: DampingRatio,
     ) -> Self {
-        let mut spring = Spring::default();
+        let mut spring = SpringInner::default();
 
         // keep values in a legal range.
         angular_frequency.0 = f32::max(0.0, angular_frequency.0);
@@ -96,7 +151,11 @@ impl Spring {
     }
 
     #[inline(always)]
-    fn calculate_critically_damped(delta_time: f32, angular_frequency: f32, spring: &mut Spring) {
+    fn calculate_critically_damped(
+        delta_time: f32,
+        angular_frequency: f32,
+        spring: &mut SpringInner,
+    ) {
         let exp_term = (-angular_frequency * delta_time).exp();
         let time_exp = delta_time * exp_term;
         let time_exp_freq = time_exp * angular_frequency;
@@ -113,7 +172,7 @@ impl Spring {
         delta_time: f32,
         angular_frequency: f32,
         damping_ratio: f32,
-        spring: &mut Spring,
+        spring: &mut SpringInner,
     ) {
         let omega_zeta = angular_frequency * damping_ratio;
         let alpha = angular_frequency * (1.0 - damping_ratio * damping_ratio).sqrt();
@@ -140,7 +199,7 @@ impl Spring {
         delta_time: f32,
         angular_frequency: f32,
         damping_ratio: f32,
-        spring: &mut Spring,
+        spring: &mut SpringInner,
     ) {
         let za = -angular_frequency * damping_ratio;
         let zb = angular_frequency * (damping_ratio * damping_ratio - 1.0).sqrt();
@@ -166,7 +225,7 @@ impl Spring {
     }
 }
 
-impl fmt::Display for Spring {
+impl fmt::Display for SpringInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,

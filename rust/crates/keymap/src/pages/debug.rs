@@ -2,6 +2,7 @@ use super::{BootPage, HomePage, components::SelectableList};
 use crate::{
     call_option, define_options,
     page::{Page, RenderInfo},
+    screen::{disable_marquee, marquee},
 };
 use alloc::boxed::Box;
 
@@ -10,6 +11,14 @@ define_options! {
         Some(HomePage::default())
     },
     "USB Boot", boot => |_| Some(BootPage::default()),
+    "Marq On", marquee_on => |_| {
+        marquee("Marquee text");
+        None::<BootPage>
+    },
+    "Marq Off", marquee_off => |_| {
+        disable_marquee("Marquee text");
+        None::<BootPage>
+    },
 }
 
 pub struct DebugPage {

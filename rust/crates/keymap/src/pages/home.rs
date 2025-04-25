@@ -1,5 +1,5 @@
 use super::{
-    ColourPage, DebugPage, InfoPage, SettingsPage,
+    ColourPage, DebugPage, InfoPage, Mode7Page, SettingsPage,
     components::{ListConfig, SelectableList},
 };
 use crate::{
@@ -12,6 +12,7 @@ define_options! {
     "Colour", colour => |_| Some(ColourPage::default()),
     "Settings", settings => |_| Some(SettingsPage::default()),
     "Info", info => |_| Some(InfoPage::default()),
+    "Mode 7", mode_7 => |_| Some(Mode7Page::default()),
     "Debug", debug => |_| Some(DebugPage::default()),
 }
 

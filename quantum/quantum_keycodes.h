@@ -211,7 +211,9 @@
 #define MIDI_CHANNEL_MAX QK_MIDI_CHANNEL_16
 
 // TODO: somehow migrate sequencer to DD?
-#include "sequencer.h"
+#ifndef NULLPTR_BINDGEN
+    #include "sequencer.h"
+#endif
 
 #define SEQUENCER_STEP_MIN (QK_SEQUENCER + 0xF)
 #define SEQUENCER_STEP_MAX (SEQUENCER_STEP_MIN + SEQUENCER_STEPS)

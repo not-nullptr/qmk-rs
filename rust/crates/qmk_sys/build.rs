@@ -35,10 +35,15 @@ fn main() {
     // check if the target is wasm32
     let is_wasm_target = env::var("TARGET").unwrap_or_default() == "wasm32-unknown-unknown";
 
+    let mut header_paths = HEADER_PATHS.to_vec();
+    if !is_wasm_target {
+        header_paths.push("../../../platforms/timer.h");
+    }
+
     let mut bindings = bindgen::builder()
-        .headers(HEADER_PATHS.iter().map(|path| path.to_string()))
+        .headers(header_paths.iter().map(|path| path.to_string()))
         .use_core()
-        .clang_args(HEADER_PATHS.iter().map(|path| {
+        .clang_args(header_paths.iter().map(|path| {
             format!("-I{}", {
                 let mut split = path.split("/").collect::<Vec<_>>();
                 split.pop();

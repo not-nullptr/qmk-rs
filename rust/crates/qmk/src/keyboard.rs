@@ -27,6 +27,20 @@ impl Keyboard {
             true
         }
     }
+
+    pub fn layer_state_is(layer: u8) -> bool {
+        #[cfg(not(target_arch = "wasm32"))]
+        unsafe extern "C" {
+            fn layer_state_is(layer: u8) -> bool;
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        unsafe fn layer_state_is(_layer: u8) -> bool {
+            false
+        }
+
+        unsafe { layer_state_is(layer) }
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

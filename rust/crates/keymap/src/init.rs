@@ -1,6 +1,6 @@
 use core::sync::atomic::Ordering;
 
-use crate::{config::SETTINGS, pages::TRANSITION_TYPE};
+use crate::{config::SETTINGS, pages::TRANSITION_TYPE, screen::marquee};
 use critical_section::with;
 use qmk::{qmk_callback, rgb::RGBLight};
 

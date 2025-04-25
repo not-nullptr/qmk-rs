@@ -1,8 +1,181 @@
 use crate::screen::Screen;
+use crate::{alloc::string::ToString, qmk_log};
 use alloc::{string::String, vec::Vec};
+use ape_table_trig::{TrigTableF32, trig_table_gen_f32};
+use core::hint::black_box;
+use core::sync::atomic::AtomicU32;
+use core::{fmt::Display, ops::Mul};
+use fixed::types::extra::U8;
 use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
 use num_traits::{Num, ToPrimitive};
+use once_cell::sync::Lazy;
+
+macro_rules! set_pixel {
+    ($fb:expr, $x:expr, $y:expr) => {
+        $fb[$x + ($y / 8) * Screen::OLED_DISPLAY_WIDTH] |= 1 << ($y % 8);
+    };
+}
+
+macro_rules! clear_pixel {
+    ($fb:expr, $x:expr, $y:expr) => {
+        $fb[$x + ($y / 8) * Screen::OLED_DISPLAY_WIDTH] &= !(1 << ($y % 8));
+    };
+}
+
+macro_rules! get_pixel {
+    ($fb:expr, $x:expr, $y:expr) => {
+        ($fb[$x + ($y / 8) * Screen::OLED_DISPLAY_WIDTH] >> ($y % 8)) & 1 == 1
+    };
+}
+
+const TABLE: [f32; 256] = trig_table_gen_f32!(256);
+
+static TRIG_TABLE_F32: Lazy<TrigTableF32> = Lazy::new(|| TrigTableF32::new(&TABLE));
+
+pub type FixedNumber = FixedI16<U7>;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Affine2 {
+    pub m00: FixedNumber,
+    pub m01: FixedNumber,
+    pub m10: FixedNumber,
+    pub m11: FixedNumber,
+    pub tx: FixedNumber,
+    pub ty: FixedNumber,
+}
+
+impl Affine2 {
+    /// Returns the identity matrix. Use this as a starting point.
+    pub fn identity() -> Self {
+        Self {
+            m00: FixedNumber::ONE,
+            m01: FixedNumber::ZERO,
+            m10: FixedNumber::ZERO,
+            m11: FixedNumber::ONE,
+            tx: FixedNumber::ZERO,
+            ty: FixedNumber::ZERO,
+        }
+    }
+
+    pub fn inverse(&self) -> Option<Affine2> {
+        // Compute determinant
+        let det = self.m00 * self.m11 - self.m01 * self.m10;
+        if det.abs() < f32::EPSILON {
+            // Not invertible
+            return None;
+        }
+        let inv_det = FixedNumber::ONE / det;
+
+        let m00 = self.m11 * inv_det;
+        let m01 = -self.m01 * inv_det;
+        let m10 = -self.m10 * inv_det;
+        let m11 = self.m00 * inv_det;
+
+        let tx = -(m00 * self.tx + m01 * self.ty);
+        let ty = -(m10 * self.tx + m11 * self.ty);
+
+        Some(Affine2 {
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+        })
+    }
+
+    /// Performs a series of transformations on the matrix about the given origin.
+    /// Usage: Affine2::identity().origin(ox, oy, Affine2::identity().rotate(a).scale(sx, sy))
+    pub fn origin<F>(self, x: FixedNumber, y: FixedNumber, affine_fn: F) -> Self
+    where
+        F: FnOnce(Affine2) -> Affine2,
+    {
+        let affine = self.translate(-x, -y);
+        let affine = affine_fn(affine);
+        affine.translate(x, y)
+    }
+
+    /// Rotates the matrix by angle (radians)
+    pub fn rotate(self, angle: FixedNumber) -> Self {
+        let (s, c) = (
+            TRIG_TABLE_F32.sin(angle.to_num()),
+            TRIG_TABLE_F32.cos(angle.to_num()),
+        );
+        let (s, c) = (
+            FixedNumber::saturating_from_num(s),
+            FixedNumber::saturating_from_num(c),
+        );
+        let rot = Self {
+            m00: c,
+            m01: -s,
+            m10: s,
+            m11: c,
+            tx: FixedNumber::ZERO,
+            ty: FixedNumber::ZERO,
+        };
+        rot.mul(self)
+    }
+
+    /// Scales the matrix
+    pub fn scale(self, sx: FixedNumber, sy: FixedNumber) -> Self {
+        let scl = Self {
+            m00: sx,
+            m01: FixedNumber::ZERO,
+            m10: FixedNumber::ZERO,
+            m11: sy,
+            tx: FixedNumber::ZERO,
+            ty: FixedNumber::ZERO,
+        };
+        scl.mul(self)
+    }
+
+    /// Translates the matrix
+    pub fn translate(self, dx: FixedNumber, dy: FixedNumber) -> Self {
+        let tr = Self {
+            m00: FixedNumber::ONE,
+            m01: FixedNumber::ZERO,
+            m10: FixedNumber::ZERO,
+            m11: FixedNumber::ONE,
+            tx: dx,
+            ty: dy,
+        };
+        tr.mul(self)
+    }
+
+    /// Calculates the given coordinate transformed by our matrix.
+    pub fn transform_point(&self, x: FixedNumber, y: FixedNumber) -> (FixedNumber, FixedNumber) {
+        (
+            self.m00 * x + self.m01 * y + self.tx,
+            self.m10 * x + self.m11 * y + self.ty,
+        )
+    }
+}
+
+static TICK: AtomicU32 = AtomicU32::new(0);
+
+impl Mul for Affine2 {
+    type Output = Self;
+
+    //
+    fn mul(self, other: Self) -> Self {
+        Self {
+            m00: self.m00 * other.m00 + self.m01 * other.m10,
+            m01: self.m00 * other.m01 + self.m01 * other.m11,
+            m10: self.m10 * other.m00 + self.m11 * other.m10,
+            m11: self.m10 * other.m01 + self.m11 * other.m11,
+            tx: self.m00 * other.tx + self.m01 * other.ty + self.tx,
+            ty: self.m10 * other.tx + self.m11 * other.ty + self.ty,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+pub enum FramebufferTransparency {
+    None,
+    IgnoreBlack,
+    IgnoreWhite,
+}
 
 const FONTPLATE: [u8; 1344] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x6A, 0x52, 0x6A, 0x3C, 0x00, 0x3C, 0x6A, 0x4E, 0x6A,
@@ -221,13 +394,59 @@ impl Framebuffer {
         self.framebuffer[byte_index] &= !(1 << bit_position);
     }
 
-    pub fn draw_char<T, U>(&mut self, x: T, y: U, ch: char, inverted: bool)
+    pub fn mode_7_optimized<F>(&mut self, affine_function: F)
+    where
+        F: Fn(u8) -> Affine2,
+    {
+        let width = Screen::OLED_DISPLAY_WIDTH;
+        let height = Screen::OLED_DISPLAY_HEIGHT;
+
+        let original_fb = Framebuffer::from_array(self.framebuffer);
+
+        for y in 0..height {
+            let Some(affine) = affine_function(y as u8).inverse() else {
+                continue;
+            };
+            let fixed_y = FixedNumber::from_num(y);
+            for x in 0..width {
+                clear_pixel!(self.framebuffer, x, y);
+                let fixed_x = FixedNumber::from_num(x);
+                let (src_x, src_y) = affine.transform_point(fixed_x, fixed_y);
+
+                let src_x = src_x.to_num::<isize>();
+                let src_y = src_y.to_num::<isize>();
+
+                let Ok(src_x) = TryInto::<usize>::try_into(src_x) else {
+                    continue;
+                };
+
+                let Ok(src_y) = TryInto::<usize>::try_into(src_y) else {
+                    continue;
+                };
+
+                if src_x >= width {
+                    continue;
+                }
+                if src_y >= height {
+                    continue;
+                }
+
+                if get_pixel!(original_fb.framebuffer, src_x, src_y) {
+                    set_pixel!(self.framebuffer, x, y);
+                } else {
+                    clear_pixel!(self.framebuffer, x, y);
+                }
+            }
+        }
+    }
+
+    pub fn draw_char<T, U>(&mut self, x: T, y: U, ch: char, inverted: bool, transparent: bool)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
     {
-        let offset_x = x.to_u8().unwrap_or(0);
-        let offset_y = y.to_u8().unwrap_or(0);
+        let offset_x = x.to_i32().unwrap_or(255);
+        let offset_y = y.to_i32().unwrap_or(255);
 
         let ascii_code = ch as usize;
         if ascii_code >= (CHAR_ROWS * CHAR_COLS) {
@@ -245,14 +464,14 @@ impl Framebuffer {
             for bit in 0..CHAR_HEIGHT {
                 if inverted {
                     if font_column & (1 << bit) != 0 {
-                        self.clear_pixel(offset_x + cx as u8, offset_y + bit as u8);
-                    } else {
-                        self.draw_pixel(offset_x + cx as u8, offset_y + bit as u8);
+                        self.clear_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                    } else if !transparent {
+                        self.draw_pixel(offset_x + cx as i32, offset_y + bit as i32);
                     }
                 } else if font_column & (1 << bit) != 0 {
-                    self.draw_pixel(offset_x + cx as u8, offset_y + bit as u8);
-                } else {
-                    self.clear_pixel(offset_x + cx as u8, offset_y + bit as u8);
+                    self.draw_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                } else if !transparent {
+                    self.clear_pixel(offset_x + cx as i32, offset_y + bit as i32);
                 }
             }
         }
@@ -320,17 +539,43 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_text<T, U>(&mut self, x: T, y: U, text: impl Into<String>, inverted: bool)
+    pub fn draw_text<T, U>(&mut self, x: T, y: U, text: impl Display, inverted: bool)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
     {
-        let offset_x = x.to_u8().unwrap_or(255);
-        let offset_y = y.to_u8().unwrap_or(255);
+        let offset_x = x.to_i32().unwrap_or(255);
+        let offset_y = y.to_i32().unwrap_or(255);
 
-        let text = text.into();
+        let text = text.to_string();
         for (i, ch) in text.chars().enumerate() {
-            self.draw_char(offset_x + (i * CHAR_WIDTH) as u8, offset_y, ch, inverted);
+            self.draw_char(
+                offset_x + (i * CHAR_WIDTH) as i32,
+                offset_y,
+                ch,
+                inverted,
+                false,
+            );
+        }
+    }
+
+    pub fn draw_text_transparent<T, U>(&mut self, x: T, y: U, text: impl Display, inverted: bool)
+    where
+        T: Num + ToPrimitive,
+        U: Num + ToPrimitive,
+    {
+        let offset_x = x.to_i32().unwrap_or(255);
+        let offset_y = y.to_i32().unwrap_or(255);
+
+        let text = text.to_string();
+        for (i, ch) in text.chars().enumerate() {
+            self.draw_char(
+                offset_x + (i * CHAR_WIDTH) as i32,
+                offset_y,
+                ch,
+                inverted,
+                true,
+            );
         }
     }
 
@@ -496,16 +741,17 @@ impl Framebuffer {
         width: V,
         height: W,
         source: &[u8],
+        transparency: FramebufferTransparency,
     ) where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
         V: Num + ToPrimitive,
         W: Num + ToPrimitive,
     {
-        let x = x.to_u8().unwrap_or(255);
-        let y = y.to_u8().unwrap_or(255);
-        let width = width.to_u8().unwrap_or(255);
-        let height = height.to_u8().unwrap_or(255);
+        let x = x.to_i32().unwrap_or(255);
+        let y = y.to_i32().unwrap_or(255);
+        let width = width.to_i32().unwrap_or(255);
+        let height = height.to_i32().unwrap_or(255);
 
         let x = x as usize;
         let y = y as usize;
@@ -520,15 +766,16 @@ impl Framebuffer {
                 for bit in 0..8 {
                     let dest_y = y + byte_row * 8 + bit;
                     let dest_x = x + col;
-                    // Only draw if within the source rectangle and screen bounds.
                     if dest_y < y + height
                         && dest_x < Screen::OLED_DISPLAY_WIDTH
                         && dest_y < Screen::OLED_DISPLAY_HEIGHT
                     {
                         let fb_index = dest_x + (dest_y / 8) * Screen::OLED_DISPLAY_WIDTH;
                         if byte & (1 << bit) != 0 {
-                            self.framebuffer[fb_index] |= 1 << (dest_y % 8);
-                        } else {
+                            if transparency != FramebufferTransparency::IgnoreWhite {
+                                self.framebuffer[fb_index] |= 1 << (dest_y % 8);
+                            }
+                        } else if transparency != FramebufferTransparency::IgnoreBlack {
                             self.framebuffer[fb_index] &= !(1 << (dest_y % 8));
                         }
                     }
@@ -617,7 +864,7 @@ impl Framebuffer {
         }
     }
 
-    pub fn dither<T>(&mut self, progress: T)
+    pub fn dither<T>(&mut self, progress: T, inverted: bool)
     where
         T: Num + ToPrimitive,
     {
@@ -641,7 +888,11 @@ impl Framebuffer {
                     continue;
                 }
 
-                self.clear_pixel(x, y);
+                if inverted {
+                    self.draw_pixel(x, y);
+                } else {
+                    self.clear_pixel(x, y);
+                }
             }
         }
     }

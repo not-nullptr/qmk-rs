@@ -11,6 +11,13 @@ micromath = "2.1.0"
 rust_decimal_macros = "1.36.0"
 fixed = "1.29.0"
 qmk-sys = { path = "../qmk_sys" }
+fixed_trigonometry = "0.4.4"
+ape-table-trig = { git = "https://github.com/yaqubmukhtar/embedded-LUP" }
+once_cell = { version = "1.21.1", default-features = false, features = [
+    "alloc",
+    "critical-section",
+    "atomic-polyfill",
+] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.77", features = ["Window", "Storage", "console"] }

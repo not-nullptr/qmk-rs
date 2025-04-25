@@ -2,7 +2,10 @@ use core::cell::RefCell;
 
 use alloc::boxed::Box;
 use critical_section::{Mutex, with};
-use qmk::{framebuffer::Framebuffer, screen::Screen};
+use qmk::{
+    framebuffer::{Framebuffer, FramebufferTransparency},
+    screen::Screen,
+};
 
 use crate::{
     page::Page,
@@ -136,9 +139,14 @@ impl TransitionHandler for DoomTransition {
             let height = Screen::OLED_DISPLAY_HEIGHT;
 
             let slice = from_framebuffer.get_framebuffer_at(x, 0, width, height);
-            renderer
-                .framebuffer
-                .draw_framebuffer_at(x, y, width, height, &slice);
+            renderer.framebuffer.draw_framebuffer_at(
+                x,
+                y,
+                width,
+                height,
+                &slice,
+                FramebufferTransparency::None,
+            );
         }
 
         self.columns

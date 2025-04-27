@@ -5,7 +5,7 @@
 
 #define OLED_DISPLAY_64X128
 #define OLED_FONT_H "keyboards/sofle/keymaps/nulls_keymap/glcdfont.c"
-#define OLED_UPDATE_PROCESS_LIMIT 8
+#define OLED_UPDATE_PROCESS_LIMIT 32
 
 #define SPLIT_TRANSACTION_IDS_USER HID_SYNC
 
@@ -14,7 +14,7 @@
 #define TRI_LAYER_LOWER_LAYER 2
 #define TRI_LAYER_UPPER_LAYER 3
 #define TRI_LAYER_ADJUST_LAYER 4
-#define I2C1_CLOCK_SPEED 800000
+#define I2C1_CLOCK_SPEED 400000
 #define RAW_USAGE_PAGE 0xFF60
 #define RAW_USAGE_ID 0x61
 

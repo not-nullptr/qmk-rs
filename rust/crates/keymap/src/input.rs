@@ -11,8 +11,9 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[qmk_callback((uint8_t, bool) -> bool)]
 fn encoder_update_user(index: u8, clockwise: bool) -> bool {
     with(|cs| {
-        let mut input_handler = INPUT_HANDLER.borrow_ref_mut(cs);
-        input_handler.handle_event(InputEvent::EncoderScroll(index, clockwise));
+        if let Ok(mut input_handler) = INPUT_HANDLER.borrow(cs).try_borrow_mut() {
+            input_handler.handle_event(InputEvent::EncoderScroll(index, clockwise));
+        }
     });
     false
 }
@@ -20,7 +21,9 @@ fn encoder_update_user(index: u8, clockwise: bool) -> bool {
 #[qmk_callback((uint16_t, keyrecord_t*) -> bool)]
 pub fn process_record_user(keycode: u16, record: *const KeyRecord) -> bool {
     with(|cs| {
-        let mut input_handler = INPUT_HANDLER.borrow_ref_mut(cs);
+        let Ok(mut input_handler) = INPUT_HANDLER.borrow(cs).try_borrow_mut() else {
+            return false;
+        };
         let keycode = keycode as u32;
         let record = unsafe { *record };
         if record.event.type_ != 257 {

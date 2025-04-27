@@ -23,7 +23,7 @@ use critical_section::{CriticalSection, Mutex, with};
 use once_cell::sync::Lazy;
 use qmk::{
     OledRotation,
-    framebuffer::{CHAR_WIDTH, Framebuffer, FramebufferTransparency},
+    framebuffer::{Affine2, CHAR_WIDTH, FixedNumber, Framebuffer, FramebufferTransparency},
     keyboard::Keyboard,
     qmk_log,
     screen::Screen,
@@ -154,6 +154,21 @@ fn remap(x: f32, src_start: f32, src_end: f32, tgt_start: f32, tgt_end: f32) -> 
     (x - src_start) / src_range * tgt_range + tgt_start
 }
 
+fn remap_fixed(
+    x: FixedNumber,
+    src_start: FixedNumber,
+    src_end: FixedNumber,
+    tgt_start: FixedNumber,
+    tgt_end: FixedNumber,
+) -> FixedNumber {
+    let src_range = src_end - src_start;
+    if src_range.is_zero() {
+        return src_start;
+    }
+    let tgt_range = tgt_end - tgt_start;
+    (x - src_start) / src_range * tgt_range + tgt_start
+}
+
 pub fn draw_marquee(framebuffer: &mut Framebuffer, tick: u32, marquee_spring_y: f32) {
     with(|cs| {
         const MARQUEE_SPEED: u32 = 1;
@@ -185,6 +200,27 @@ pub fn draw_marquee(framebuffer: &mut Framebuffer, tick: u32, marquee_spring_y: 
         );
         text_framebuffer.draw_text(x0, -1, text, true);
         let dither_progress = remap(marquee_spring_y, 0.0, MARQUEE_HEIGHT as f32, 20.0, -12.0);
+        let scale_progress = remap(marquee_spring_y, 0.0, MARQUEE_HEIGHT as f32, 0.1, 0.0);
+
+        if scale_progress != 0.0 {
+            text_framebuffer.mode_7(
+                |row| {
+                    let row = row as f32;
+                    Affine2::identity().origin(
+                        FixedNumber::lit("32"),
+                        FixedNumber::from_num(CHAR_HEIGHT / 2),
+                        |affine| {
+                            affine.scale(
+                                FixedNumber::from_num((row * scale_progress) + 1.0),
+                                FixedNumber::from_num((row * scale_progress) + 1.0),
+                            )
+                        },
+                    )
+                },
+                true,
+            );
+        }
+
         text_framebuffer.dither(dither_progress.clamp(0.0, 8.0), true);
         framebuffer.draw_framebuffer_at(
             0,
@@ -207,13 +243,15 @@ fn render_right() -> (Actions, Framebuffer) {
         let mut page = RIGHT_HAND_PAGE.borrow_ref_mut(cs);
         let mut actions = alloc::vec![];
         if let Some(ref mut page) = *page {
-            page.render(&mut RenderInfo {
-                framebuffer: &mut framebuffer,
-                cs,
-                tick: TICK.load(Ordering::SeqCst),
-                input: &mut INPUT_HANDLER.borrow_ref_mut(cs),
-                actions: &mut actions,
-            });
+            if let Ok(mut input_handler) = INPUT_HANDLER.borrow(cs).try_borrow_mut() {
+                page.render(&mut RenderInfo {
+                    framebuffer: &mut framebuffer,
+                    cs,
+                    tick: TICK.load(Ordering::SeqCst),
+                    input: &mut input_handler,
+                    actions: &mut actions,
+                });
+            };
         }
 
         TICK.store(
@@ -297,7 +335,9 @@ fn draw_screen(
     cs: CriticalSection,
 ) -> (Vec<Box<dyn FnOnce()>>, bool) {
     let tick = TICK.load(Ordering::SeqCst);
-    let mut input = INPUT_HANDLER.borrow_ref_mut(cs);
+    let Ok(mut input) = INPUT_HANDLER.borrow(cs).try_borrow_mut() else {
+        return (alloc::vec![], false);
+    };
     let mut actions = alloc::vec![];
     let mut info = RenderInfo {
         framebuffer,

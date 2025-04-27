@@ -5,7 +5,8 @@ use ape_table_trig::{TrigTableF32, trig_table_gen_f32};
 use core::hint::black_box;
 use core::sync::atomic::AtomicU32;
 use core::{fmt::Display, ops::Mul};
-use fixed::types::extra::U8;
+use fixed::FixedI32;
+use fixed::types::extra::{U8, U16};
 use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
 use num_traits::{Num, ToPrimitive};
@@ -31,7 +32,7 @@ macro_rules! get_pixel {
 
 const TABLE: [f32; 256] = trig_table_gen_f32!(256);
 
-static TRIG_TABLE_F32: Lazy<TrigTableF32> = Lazy::new(|| TrigTableF32::new(&TABLE));
+pub static TRIG_TABLE_F32: Lazy<TrigTableF32> = Lazy::new(|| TrigTableF32::new(&TABLE));
 
 pub type FixedNumber = FixedI16<U7>;
 
@@ -47,7 +48,7 @@ pub struct Affine2 {
 
 impl Affine2 {
     /// Returns the identity matrix. Use this as a starting point.
-    pub fn identity() -> Self {
+    pub const fn identity() -> Self {
         Self {
             m00: FixedNumber::ONE,
             m01: FixedNumber::ZERO,
@@ -394,7 +395,52 @@ impl Framebuffer {
         self.framebuffer[byte_index] &= !(1 << bit_position);
     }
 
-    pub fn mode_7_optimized<F>(&mut self, affine_function: F)
+    pub fn affine(&mut self, affine: Affine2, clear_with_white: bool) {
+        let width = Screen::OLED_DISPLAY_WIDTH;
+        let height = Screen::OLED_DISPLAY_HEIGHT;
+
+        let original_fb = Framebuffer::from_array(self.framebuffer);
+
+        for y in 0..height {
+            for x in 0..width {
+                // clear_pixel!(self.framebuffer, x, y);
+                if clear_with_white {
+                    set_pixel!(self.framebuffer, x, y);
+                } else {
+                    clear_pixel!(self.framebuffer, x, y);
+                }
+                let fixed_x = FixedNumber::from_num(x);
+                let fixed_y = FixedNumber::from_num(y);
+                let (src_x, src_y) = affine.transform_point(fixed_x, fixed_y);
+
+                let src_x = src_x.to_num::<isize>();
+                let src_y = src_y.to_num::<isize>();
+
+                let Ok(src_x) = TryInto::<usize>::try_into(src_x) else {
+                    continue;
+                };
+
+                let Ok(src_y) = TryInto::<usize>::try_into(src_y) else {
+                    continue;
+                };
+
+                if src_x >= width {
+                    continue;
+                }
+                if src_y >= height {
+                    continue;
+                }
+
+                if get_pixel!(original_fb.framebuffer, src_x, src_y) {
+                    set_pixel!(self.framebuffer, x, y);
+                } else {
+                    clear_pixel!(self.framebuffer, x, y);
+                }
+            }
+        }
+    }
+
+    pub fn mode_7<F>(&mut self, affine_function: F, clear_with_white: bool)
     where
         F: Fn(u8) -> Affine2,
     {
@@ -409,7 +455,13 @@ impl Framebuffer {
             };
             let fixed_y = FixedNumber::from_num(y);
             for x in 0..width {
-                clear_pixel!(self.framebuffer, x, y);
+                // clear_pixel!(self.framebuffer, x, y);
+                if clear_with_white {
+                    set_pixel!(self.framebuffer, x, y);
+                } else {
+                    clear_pixel!(self.framebuffer, x, y);
+                }
+
                 let fixed_x = FixedNumber::from_num(x);
                 let (src_x, src_y) = affine.transform_point(fixed_x, fixed_y);
 

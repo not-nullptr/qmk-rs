@@ -1,16 +1,23 @@
-#[cfg(not(target_arch = "wasm32"))]
-use qmk_sys::is_keyboard_left;
-
 #[cfg(target_arch = "wasm32")]
-unsafe fn is_keyboard_left() -> bool {
-    true
+mod bindings {
+    pub unsafe fn is_keyboard_left() -> bool {
+        true
+    }
+
+    pub unsafe fn tap_code16(_key: u16) {}
+    pub unsafe fn tap_code16_delay(_key: u16, _delay: u16) {}
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+mod bindings {
+    pub use qmk_sys::{is_keyboard_left, tap_code16, tap_code16_delay};
 }
 
 pub struct Keyboard;
 
 impl Keyboard {
     pub fn is_left() -> bool {
-        unsafe { is_keyboard_left() }
+        unsafe { bindings::is_keyboard_left() }
     }
 
     pub fn is_right() -> bool {
@@ -40,6 +47,18 @@ impl Keyboard {
         }
 
         unsafe { layer_state_is(layer) }
+    }
+
+    pub fn send_key(key: u16) {
+        unsafe {
+            bindings::tap_code16(key);
+        }
+    }
+
+    pub fn send_key_delay(key: u16, delay: u16) {
+        unsafe {
+            bindings::tap_code16_delay(key, delay);
+        }
     }
 }
 

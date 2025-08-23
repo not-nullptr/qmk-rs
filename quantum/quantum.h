@@ -15,7 +15,10 @@
  */
 #pragma once
 
+#ifndef NULLPTR_BINDGEN
 #include "platform_deps.h"
+#include "host.h"
+#endif
 #include "wait.h"
 #include "matrix.h"
 #include "keyboard.h"
@@ -38,6 +41,10 @@
 
 #include "keymap_common.h"
 #include "quantum_keycodes.h"
+#include "action.h"
+#include "action_layer.h"
+
+#ifndef NULLPTR_BINDGEN
 #include "keycode_config.h"
 #include "action_layer.h"
 #include "eeconfig.h"
@@ -46,13 +53,13 @@
 #include "sync_timer.h"
 #include "gpio.h"
 #include "atomic_util.h"
-#include "host.h"
 #include "led.h"
 #include "action_util.h"
 #include "action_tapping.h"
 #include "print.h"
 #include "debug.h"
 #include "suspend.h"
+#endif
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>

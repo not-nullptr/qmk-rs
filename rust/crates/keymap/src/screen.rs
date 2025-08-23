@@ -1,6 +1,5 @@
 use core::{
     cell::RefCell,
-    fmt::Display,
     sync::atomic::{AtomicBool, AtomicU32, Ordering},
 };
 
@@ -15,17 +14,13 @@ use crate::{
     state::{INPUT_HANDLER, PAGE},
 };
 use alloc::{boxed::Box, vec::Vec};
-use alloc::{
-    format,
-    string::{String, ToString},
-};
+use alloc::{format, string::String};
 use critical_section::{CriticalSection, Mutex, with};
 use once_cell::sync::Lazy;
 use qmk::{
     OledRotation,
     framebuffer::{Affine2, CHAR_WIDTH, FixedNumber, Framebuffer, FramebufferTransparency},
     keyboard::Keyboard,
-    qmk_log,
     screen::Screen,
 };
 use qmk::{framebuffer::CHAR_HEIGHT, qmk_callback};
@@ -45,8 +40,8 @@ static MARQUEE_TEXT: Mutex<RefCell<Option<String>>> = Mutex::new(RefCell::new(No
 
 const MARQUEE_HEIGHT: u16 = CHAR_HEIGHT as u16 + 4;
 
-pub fn marquee(text: impl Display) {
-    let text = text.to_string();
+pub fn marquee(text: impl AsRef<str>) {
+    let text = text.as_ref();
     let text_len = text.len();
     let screen_chars = Screen::OLED_DISPLAY_WIDTH / CHAR_WIDTH;
 
@@ -63,9 +58,9 @@ pub fn marquee(text: impl Display) {
     });
 }
 
-pub fn disable_marquee(text: impl Display) {
+pub fn disable_marquee(text: impl AsRef<str>) {
     with(|cs| {
-        let text = text.to_string();
+        let text = text.as_ref();
         let marquee_text = MARQUEE_TEXT.borrow_ref(cs);
         let Some(existing_text) = marquee_text.as_ref() else {
             return;

@@ -1,4 +1,4 @@
-use qmk::{keymap, mo, to};
+use qmk::{keymap, keys::QK_USER_0, mo, to};
 
 #[allow(dead_code)]
 const NUM_LAYERS: u8 = 3;
@@ -6,6 +6,7 @@ const NUM_LAYERS: u8 = 3;
 const CS_LOWER: u16 = mo!(1);
 const CS_GO_GAME: u16 = to!(2);
 const CS_GO_DEF: u16 = to!(0);
+pub const CS_RESET: u16 = QK_USER_0 as u16;
 
 keymap! {
     "sofle/rev1",
@@ -26,8 +27,8 @@ keymap! {
     {
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX,  KC_UP,  XXXXXXX, XXXXXXX, XXXXXXX
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, KC_LEFT, KC_DOWN, KC_RIGHT,XXXXXXX, XXXXXXX
+        XXXXXXX, XXXXXXX, XXXXXXX, KC_PIPE, XXXXXXX, XXXXXXX,                     XXXXXXX, KC_LEFT, KC_DOWN, KC_RIGHT,XXXXXXX, XXXXXXX
         XXXXXXX, XXXXXXX,   KC_Z,    KC_X,   KC_C,   XXXXXXX, XXXXXXX,    XXXXXXX,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
-                         XXXXXXX,XXXXXXX,XXXXXXX, XXXXXXX,  KC_SPC,    KC_ENT , CS_GO_DEF, XXXXXXX, XXXXXXX, XXXXXXX
+                         XXXXXXX,XXXXXXX,XXXXXXX, XXXXXXX,  KC_SPC,    KC_ENT , CS_GO_DEF, CS_RESET,XXXXXXX, XXXXXXX
     },
 }

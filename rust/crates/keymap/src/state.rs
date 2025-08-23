@@ -1,14 +1,17 @@
 #![allow(dead_code)]
 
+use crate::keymap::CS_RESET;
 use crate::page::Page;
 use crate::pages::StartupPage;
 use alloc::vec;
 use alloc::{boxed::Box, vec::Vec};
 use core::cell::RefCell;
+use core::hint::black_box;
 use core::prelude::rust_2024::*;
 use critical_section::Mutex;
 use once_cell::sync::Lazy;
-use qmk::keys::{KC_F20, KC_F21};
+use qmk::keyboard::Keyboard;
+use qmk::keys::{KC_C, KC_DOWN, KC_ENTER, KC_F20, KC_F21};
 
 pub struct InputHandler {
     events: Vec<InputEvent>,
@@ -54,7 +57,10 @@ impl InputHandler {
 
     #[inline(always)]
     pub fn handle_event(&mut self, event: InputEvent) {
-        self.events.push(event);
+        let is_game_mode = Keyboard::layer_state_is(2);
+        if !is_game_mode {
+            self.events.push(event);
+        }
     }
 
     pub fn poll(&mut self) -> Option<InputEvent> {
@@ -75,8 +81,8 @@ impl InputHandler {
             self.left_encoder_down = true;
         } else if key == KC_F21 {
             self.right_encoder_down = true;
-        } else if !self.keys.contains(&key) {
-            self.keys.push(key);
+        } else if !self.keys.contains(&key) && !Keyboard::layer_state_is(2) {
+            // self.keys.push(key);
         }
     }
 

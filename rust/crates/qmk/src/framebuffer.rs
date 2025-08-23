@@ -316,7 +316,8 @@ impl Framebuffer {
 
     #[cfg(target_arch = "wasm32")]
     pub fn render(&self, canvas: web_sys::HtmlCanvasElement) {
-        use web_sys::wasm_bindgen::JsCast;
+        use alloc::boxed::Box;
+        use web_sys::wasm_bindgen::{Clamped, JsCast};
 
         let ctx = canvas
             .get_context("2d")
@@ -325,22 +326,36 @@ impl Framebuffer {
             .dyn_into::<web_sys::CanvasRenderingContext2d>()
             .unwrap();
 
-        // clear as black
-        ctx.set_fill_style_str("black");
-        ctx.fill_rect(
-            0.0,
-            0.0,
-            Screen::OLED_DISPLAY_WIDTH as f64,
-            Screen::OLED_DISPLAY_HEIGHT as f64,
-        );
-        ctx.set_fill_style_str("white");
+        let mut data =
+            Box::new([0u8; Screen::OLED_DISPLAY_WIDTH * Screen::OLED_DISPLAY_HEIGHT * 4]);
+
         for y in 0..Screen::OLED_DISPLAY_HEIGHT {
             for x in 0..Screen::OLED_DISPLAY_WIDTH {
-                if self.get_pixel(x, y) {
-                    ctx.fill_rect(x as f64, y as f64, 1.0, 1.0);
+                let pixel_on = self.get_pixel(x, y);
+                let index = (y * Screen::OLED_DISPLAY_WIDTH + x) * 4;
+                if pixel_on {
+                    data[index] = 255;
+                    data[index + 1] = 255;
+                    data[index + 2] = 255;
+                    data[index + 3] = 255;
+                } else {
+                    data[index] = 0;
+                    data[index + 1] = 0;
+                    data[index + 2] = 0;
+                    data[index + 3] = 255;
                 }
             }
         }
+
+        let clamped = Clamped(&data[..]);
+        let image_data = web_sys::ImageData::new_with_u8_clamped_array_and_sh(
+            clamped,
+            Screen::OLED_DISPLAY_WIDTH as u32,
+            Screen::OLED_DISPLAY_HEIGHT as u32,
+        )
+        .unwrap();
+
+        ctx.put_image_data(&image_data, 0.0, 0.0).unwrap();
     }
 
     pub fn get_pixel<T, U>(&self, x: T, y: U) -> bool
@@ -591,7 +606,7 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_text<T, U>(&mut self, x: T, y: U, text: impl Display, inverted: bool)
+    pub fn draw_text<T, U>(&mut self, x: T, y: U, text: impl AsRef<str>, inverted: bool)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
@@ -599,7 +614,7 @@ impl Framebuffer {
         let offset_x = x.to_i32().unwrap_or(255);
         let offset_y = y.to_i32().unwrap_or(255);
 
-        let text = text.to_string();
+        let text = text.as_ref();
         for (i, ch) in text.chars().enumerate() {
             self.draw_char(
                 offset_x + (i * CHAR_WIDTH) as i32,
@@ -611,7 +626,7 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_text_transparent<T, U>(&mut self, x: T, y: U, text: impl Display, inverted: bool)
+    pub fn draw_text_transparent<T, U>(&mut self, x: T, y: U, text: impl AsRef<str>, inverted: bool)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
@@ -619,7 +634,7 @@ impl Framebuffer {
         let offset_x = x.to_i32().unwrap_or(255);
         let offset_y = y.to_i32().unwrap_or(255);
 
-        let text = text.to_string();
+        let text = text.as_ref();
         for (i, ch) in text.chars().enumerate() {
             self.draw_char(
                 offset_x + (i * CHAR_WIDTH) as i32,

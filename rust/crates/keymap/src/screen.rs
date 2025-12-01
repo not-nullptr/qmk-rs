@@ -5,6 +5,7 @@ use core::{
 
 use crate::{
     animation::{AngularFrequency, DampingRatio, DeltaTime, Spring, fps},
+    cat::Cat,
     config::PageTransition,
     page::{Page as _, RenderInfo},
     pages::{
@@ -80,16 +81,32 @@ fn oled_init_user(_: OledRotation::Type) -> OledRotation::Type {
     OledRotation::OLED_ROTATION_0
 }
 
+static CAT: Mutex<RefCell<Cat>> = Mutex::new(RefCell::new(Cat::new()));
+
 #[cfg(not(target_arch = "wasm32"))]
 #[qmk_callback(() -> bool)]
 fn oled_task_user() -> bool {
-    let actions = with(|_| {
-        let (actions, fb) = if Keyboard::is_right() {
+    let mut handler = with(|cs| INPUT_HANDLER.borrow_ref(cs).clone());
+
+    let actions = with(|cs| {
+        let (actions, mut fb) = if Keyboard::is_right() {
             render_right()
         } else {
             render_left()
         };
+
+        let mut info = RenderInfo {
+            framebuffer: &mut fb,
+            cs,
+            tick: TICK.load(Ordering::SeqCst),
+            input: &mut handler,
+            actions: &mut alloc::vec![],
+        };
+
+        CAT.borrow_ref_mut(cs).draw(&mut info);
+
         fb.render();
+
         actions
     });
 
@@ -103,11 +120,25 @@ fn oled_task_user() -> bool {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn oled_task_user_wasm(canvas: web_sys::HtmlCanvasElement) {
-    let (actions, fb) = if Keyboard::is_right() {
+    let mut handler = with(|cs| INPUT_HANDLER.borrow_ref(cs).clone());
+
+    let (actions, mut fb) = if Keyboard::is_right() {
         render_right()
     } else {
         render_left()
     };
+
+    with(|cs| {
+        let mut info = RenderInfo {
+            framebuffer: &mut fb,
+            cs,
+            tick: TICK.load(Ordering::SeqCst),
+            input: &mut handler,
+            actions: &mut alloc::vec![],
+        };
+
+        CAT.borrow_ref_mut(cs).draw(&mut info);
+    });
 
     fb.render(canvas);
 
@@ -360,6 +391,7 @@ fn draw_screen(
             *transitioning = Some(transition);
             should_draw_border
         };
+
         return (actions, should_draw_border);
     }
 
@@ -383,5 +415,6 @@ fn draw_screen(
     }
 
     let should_draw_border = page.should_draw_border();
+
     (actions, should_draw_border)
 }

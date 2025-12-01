@@ -1,6 +1,6 @@
 use std::fs;
 
-use image::{ImageBuffer, Luma};
+use image::{ImageBuffer, Luma, Rgb};
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use regex::Regex;
@@ -12,39 +12,69 @@ fn remove_non_alphanumeric(input: &str) -> String {
 }
 
 fn to_format(
-    img: ImageBuffer<Luma<u8>, Vec<u8>>,
+    img: ImageBuffer<Rgb<u8>, Vec<u8>>,
     width: usize,
     height: usize,
     use_fb_format: bool,
-) -> Vec<u8> {
-    let mut output = Vec::new();
+) -> (Vec<u8>, Option<Vec<u8>>) {
+    let mut pixel_output = Vec::new();
+    let mut alpha_output = Vec::new();
     let blocks_per_col = height.div_ceil(8);
 
     for x in 0..width {
         for block in 0..blocks_per_col {
-            let mut byte: u8 = 0;
+            let mut pixel_byte: u8 = 0;
+            let mut alpha_byte: u8 = 0;
+
             for bit in 0..8 {
                 let y = block * 8 + bit;
                 if y < height {
-                    let pixel = img.get_pixel(x as u32, y as u32)[0];
-                    if pixel >= 127 {
+                    let pixel = img.get_pixel(x as u32, y as u32);
+                    let is_alpha = pixel[0] == 0 && pixel[1] == 255 && pixel[2] == 0;
+
+                    if is_alpha {
                         if use_fb_format {
-                            byte |= 1 << bit;
+                            alpha_byte &= !(1 << bit);
                         } else {
-                            byte |= 1 << (7 - bit);
+                            alpha_byte &= !(1 << (7 - bit));
+                        }
+                    } else {
+                        if use_fb_format {
+                            alpha_byte |= 1 << bit;
+                        } else {
+                            alpha_byte |= 1 << (7 - bit);
+                        }
+
+                        if pixel[0] >= 127 {
+                            if use_fb_format {
+                                pixel_byte |= 1 << bit;
+                            } else {
+                                pixel_byte |= 1 << (7 - bit);
+                            }
                         }
                     }
                 }
             }
-            output.push(byte);
+
+            pixel_output.push(pixel_byte);
+            alpha_output.push(alpha_byte);
         }
     }
-    output
+
+    if alpha_output.iter().all(|&b| b == 1) {
+        // if it's all opaque, don't include alpha
+        return (pixel_output, None);
+    }
+
+    (pixel_output, Some(alpha_output))
 }
 
-fn path_to_image(path: &str, use_fb_format: bool) -> (Vec<u8>, String, usize, usize) {
+fn path_to_image(
+    path: &str,
+    use_fb_format: bool,
+) -> ((Vec<u8>, Option<Vec<u8>>), String, usize, usize) {
     let img = match image::open(path) {
-        Ok(img) => img.to_luma8(),
+        Ok(img) => img.to_rgb8(),
         Err(e) => panic!("failed to open image {}: {}", path, e),
     };
 
@@ -90,25 +120,44 @@ impl Parse for ParsedArgs {
 pub fn include_image(input: TokenStream) -> TokenStream {
     // parse the input into a comma separated list of arguments
     let parsed_args = parse_macro_input!(input as ParsedArgs);
-    let (bytes, name, width, height) =
+    let ((pixel_bytes, opacity_bytes), name, width, height) =
         path_to_image(&parsed_args.path, parsed_args.framebuffer_format);
 
     let width = width as u8;
     let height = height as u8;
 
-    let byte_array = bytes.as_slice();
+    let byte_array = pixel_bytes.as_slice();
     let byte_count = byte_array.len();
 
     let name_ident = syn::Ident::new(&name, Span::call_site().into());
 
-    let byte_tokens = bytes.iter().map(|b| quote! { #b }).collect::<Vec<_>>();
+    let byte_tokens = pixel_bytes
+        .iter()
+        .map(|b| quote! { #b })
+        .collect::<Vec<_>>();
 
-    let output = quote! {
-        pub const #name_ident: ::include_image::QmkImage<#byte_count> = ::include_image::QmkImage {
-            width: #width,
-            height: #height,
-            bytes: [#(#byte_tokens),*],
-        };
+    let output = if let Some(opacity_bytes) = opacity_bytes {
+        let opacity_array = opacity_bytes.as_slice();
+        let opacity_tokens = opacity_array
+            .iter()
+            .map(|b| quote! { #b })
+            .collect::<Vec<_>>();
+        quote! {
+            pub const #name_ident: ::include_image::QmkImageAlpha<#byte_count> = ::include_image::QmkImageAlpha {
+                width: #width,
+                height: #height,
+                bytes: [#(#byte_tokens),*],
+                alpha: [#(#opacity_tokens),*],
+            };
+        }
+    } else {
+        quote! {
+            pub const #name_ident: ::include_image::QmkImageOpaque<#byte_count> = ::include_image::QmkImageOpaque {
+                width: #width,
+                height: #height,
+                bytes: [#(#byte_tokens),*],
+            };
+        }
     };
 
     output.into()
@@ -147,32 +196,64 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
 
     let mut all_lens = 0;
 
+    let mut requires_opacity = false;
+
     for (name, _) in files.into_iter() {
-        let (bytes, _name, width, height) = path_to_image(
+        let ((pixel_bytes, opacity_bytes), _name, width, height) = path_to_image(
             &format!("{}/{}", parsed_args.path, name),
             parsed_args.framebuffer_format,
         );
 
         if all_lens == 0 {
-            all_lens = bytes.len();
-        } else if all_lens != bytes.len() {
+            all_lens = pixel_bytes.len();
+        } else if all_lens != pixel_bytes.len() {
             panic!("non-equal image sizes");
         }
 
         let width = width as u8;
         let height = height as u8;
 
-        let byte_tokens = bytes.iter().map(|b| quote! { #b }).collect::<Vec<_>>();
+        let byte_tokens = pixel_bytes
+            .iter()
+            .map(|b| quote! { #b })
+            .collect::<Vec<_>>();
 
-        let byte_count = bytes.len();
+        let byte_count = pixel_bytes.len();
 
-        images_tokens.push(quote! {
-            ::include_image::QmkImage::<#byte_count> {
-                width: #width,
-                height: #height,
-                bytes: [#(#byte_tokens),*],
+        // images_tokens.push(quote! {
+        //     ::include_image::QmkImage::<#byte_count> {
+        //         width: #width,
+        //         height: #height,
+        //         bytes: [#(#byte_tokens),*],
+        //     }
+        // });
+
+        let image_token = if let Some(opacity_bytes) = opacity_bytes {
+            requires_opacity = true;
+            let opacity_array = opacity_bytes.as_slice();
+            let opacity_tokens = opacity_array
+                .iter()
+                .map(|b| quote! { #b })
+                .collect::<Vec<_>>();
+            quote! {
+                ::include_image::QmkImageAlpha::<#byte_count> {
+                    width: #width,
+                    height: #height,
+                    bytes: [#(#byte_tokens),*],
+                    alpha: [#(#opacity_tokens),*],
+                }
             }
-        });
+        } else {
+            quote! {
+                ::include_image::QmkImageOpaque::<#byte_count> {
+                    width: #width,
+                    height: #height,
+                    bytes: [#(#byte_tokens),*],
+                }
+            }
+        };
+
+        images_tokens.push(image_token);
     }
 
     let images_tokens_len = images_tokens.len();
@@ -181,8 +262,20 @@ pub fn include_animation(input: TokenStream) -> TokenStream {
     //     .iter()
     //     .fold(quote! {}, |acc, new| quote! {#acc #new});
 
+    // let output = quote! {
+    //     pub const #name_ident: [::include_image::QmkImage<#all_lens>; #images_tokens_len] = [
+    //         #(#images_tokens),*
+    //     ];
+    // };
+
+    let ty = if requires_opacity {
+        quote! { ::include_image::QmkImageAlpha<#all_lens> }
+    } else {
+        quote! { ::include_image::QmkImageOpaque<#all_lens> }
+    };
+
     let output = quote! {
-        pub const #name_ident: [::include_image::QmkImage<#all_lens>; #images_tokens_len] = [
+        pub const #name_ident: [#ty; #images_tokens_len] = [
             #(#images_tokens),*
         ];
     };

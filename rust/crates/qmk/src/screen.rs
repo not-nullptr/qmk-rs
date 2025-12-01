@@ -1,4 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
+use core::borrow::Borrow;
+
+#[cfg(not(target_arch = "wasm32"))]
 use alloc::{ffi::CString, string::String};
 #[cfg(not(target_arch = "wasm32"))]
 use include_image::QmkImage;
@@ -42,22 +45,28 @@ impl Screen {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn draw_image<T, U, const N: usize>(x: T, y: U, image: QmkImage<N>)
+    pub fn draw_image<T, U, B, I, const N: usize>(x: T, y: U, image: &I)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
+        I: QmkImage,
     {
+        let image: &I = image.borrow();
+
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+
         let offset_x = x.to_u8().unwrap_or(255);
         let offset_y = y.to_u8().unwrap_or(255);
 
-        let columns = u32::div_ceil(image.height as u32, 8);
+        let columns = u32::div_ceil(height as u32, 8);
         for y_block in 0..columns {
             let y_offset = y_block * 8;
-            for x in 0..image.width {
-                let byte = image.bytes[x as usize + y_block as usize * image.width as usize];
+            for x in 0..width {
+                let byte = image.as_bytes()[x + y_block as usize * width];
                 for bit in 0..8 {
                     let is_on = (byte & (1 << bit)) != 0;
-                    let x = x + offset_x;
+                    let x = x + offset_x as usize;
                     let y_offset = y_offset as u8 + offset_y;
                     if is_on {
                         Screen::draw_pixel(x, y_offset + bit);

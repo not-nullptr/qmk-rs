@@ -13,6 +13,7 @@ use once_cell::sync::Lazy;
 use qmk::keyboard::Keyboard;
 use qmk::keys::{KC_C, KC_DOWN, KC_ENTER, KC_F20, KC_F21};
 
+#[derive(Clone)]
 pub struct InputHandler {
     events: Vec<InputEvent>,
     keys: Vec<u32>,
@@ -97,7 +98,7 @@ impl InputHandler {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum InputEvent {
     EncoderScroll(u8, bool),
     EncoderClick(u8),

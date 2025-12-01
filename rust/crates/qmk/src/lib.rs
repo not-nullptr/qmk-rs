@@ -13,6 +13,7 @@ pub mod framebuffer;
 pub mod keyboard;
 pub mod keys;
 pub mod logging;
+pub mod rect;
 pub mod rgb;
 pub mod screen;
 pub mod sys;

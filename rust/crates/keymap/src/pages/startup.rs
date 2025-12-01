@@ -50,9 +50,7 @@ impl Page for StartupPage {
                 config.startup_skip
             });
 
-            if skip {
-                return Some(Box::new(HomePage::default()));
-            }
+            return Some(Box::new(HomePage::default()));
         }
 
         let lim = (BOOT.len() as f32 * SLOW_FAC) as u8;

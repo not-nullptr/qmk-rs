@@ -8,6 +8,7 @@ extern crate core;
 extern crate std;
 
 mod animation;
+mod cat;
 mod config;
 mod heap;
 mod image;

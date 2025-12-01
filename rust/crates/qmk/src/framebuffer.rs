@@ -1,12 +1,12 @@
-use crate::screen::Screen;
-use crate::{alloc::string::ToString, qmk_log};
-use alloc::{string::String, vec::Vec};
+use crate::{rect::Rect, screen::Screen};
+use alloc::{
+    string::String,
+    vec::{self, Vec},
+};
 use ape_table_trig::{TrigTableF32, trig_table_gen_f32};
-use core::hint::black_box;
+use core::borrow::Borrow;
+use core::ops::Mul;
 use core::sync::atomic::AtomicU32;
-use core::{fmt::Display, ops::Mul};
-use fixed::FixedI32;
-use fixed::types::extra::{U8, U16};
 use fixed::{FixedI16, types::extra::U7};
 use include_image::QmkImage;
 use num_traits::{Num, ToPrimitive};
@@ -286,23 +286,32 @@ type FramebufferArray = [u8; Screen::OLED_DISPLAY_SIZE];
 
 pub struct Framebuffer {
     framebuffer: FramebufferArray,
+    bounds: Vec<Rect<i16>>,
 }
 
 impl Default for Framebuffer {
     fn default() -> Self {
         Self {
             framebuffer: [0; Screen::OLED_DISPLAY_SIZE],
+            bounds: Vec::new(),
         }
     }
 }
 
 impl Framebuffer {
     pub fn from_array(framebuffer: FramebufferArray) -> Self {
-        Self { framebuffer }
+        Self {
+            framebuffer,
+            bounds: Vec::new(),
+        }
     }
 
     pub fn take_framebuffer(self) -> FramebufferArray {
         self.framebuffer
+    }
+
+    pub fn bounds(&self) -> &[Rect<i16>] {
+        &self.bounds
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -512,8 +521,8 @@ impl Framebuffer {
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
     {
-        let offset_x = x.to_i32().unwrap_or(255);
-        let offset_y = y.to_i32().unwrap_or(255);
+        let offset_x = x.to_i16().unwrap_or(255);
+        let offset_y = y.to_i16().unwrap_or(255);
 
         let ascii_code = ch as usize;
         if ascii_code >= (CHAR_ROWS * CHAR_COLS) {
@@ -531,17 +540,43 @@ impl Framebuffer {
             for bit in 0..CHAR_HEIGHT {
                 if inverted {
                     if font_column & (1 << bit) != 0 {
-                        self.clear_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                        self.clear_pixel(offset_x + cx as i16, offset_y + bit as i16);
                     } else if !transparent {
-                        self.draw_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                        self.draw_pixel(offset_x + cx as i16, offset_y + bit as i16);
                     }
                 } else if font_column & (1 << bit) != 0 {
-                    self.draw_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                    self.draw_pixel(offset_x + cx as i16, offset_y + bit as i16);
                 } else if !transparent {
-                    self.clear_pixel(offset_x + cx as i32, offset_y + bit as i32);
+                    self.clear_pixel(offset_x + cx as i16, offset_y + bit as i16);
                 }
             }
         }
+
+        self.bounds.push(Rect {
+            x: offset_x,
+            y: offset_y,
+            width: CHAR_WIDTH as i16,
+            height: CHAR_HEIGHT as i16,
+        });
+    }
+
+    pub fn finalize_bounds(&mut self) {
+        let mut to_remove = alloc::vec![false; self.bounds.len()];
+        for (i, bound_i) in self.bounds.iter().enumerate() {
+            for (j, bound_j) in self.bounds.iter().enumerate() {
+                if i != j && bound_j.intersects(bound_i) {
+                    to_remove[i] = true;
+                    break;
+                }
+            }
+        }
+
+        let mut i = 0;
+        self.bounds.retain(|_| {
+            let keep = !to_remove[i];
+            i += 1;
+            keep
+        });
     }
 
     pub fn scale_around<T, U, V, W>(&mut self, x: T, y: U, width: V, height: W)
@@ -646,13 +681,13 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_text_centered<T, U>(&mut self, x: T, y: U, text: impl Into<String>, inverted: bool)
+    pub fn draw_text_centered<T, U>(&mut self, x: T, y: U, text: impl AsRef<str>, inverted: bool)
     where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
     {
         let offset_y = y.to_u8().unwrap_or(255);
-        let text = text.into();
+        let text = text.as_ref();
         let text_length = text.chars().count() as u8;
         let offset_x = x.to_u8().unwrap_or(255);
         let offset_x = offset_x - (text_length * CHAR_WIDTH as u8) / 2;
@@ -724,6 +759,13 @@ impl Framebuffer {
                 self.draw_pixel(x + i, y + j);
             }
         }
+
+        self.bounds.push(Rect {
+            x,
+            y,
+            width: width as i16,
+            height: height as i16,
+        });
     }
 
     pub fn draw_framebuffer<T, U>(&mut self, x: T, y: U, framebuffer: FramebufferArray)
@@ -851,28 +893,32 @@ impl Framebuffer {
         }
     }
 
-    pub fn draw_image<T, U, const M: usize>(
-        &mut self,
-        offset_x: T,
-        offset_y: U,
-        image: &QmkImage<M>,
-    ) where
+    pub fn draw_image<T, U, I>(&mut self, offset_x: T, offset_y: U, image: &I)
+    where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
+        I: QmkImage,
     {
-        let offset_x = offset_x.to_u8().unwrap_or(255);
-        let offset_y = offset_y.to_u8().unwrap_or(255);
+        let offset_x = offset_x.to_i16().unwrap_or(255);
+        let offset_y = offset_y.to_i16().unwrap_or(255);
+        let width = image.width() as usize;
+        let height = image.height() as usize;
 
-        let img_pages = (image.height as usize).div_ceil(8);
+        let img_pages = height.div_ceil(8);
         let display_width = Screen::OLED_DISPLAY_WIDTH;
 
-        for x in 0..image.width as usize {
-            for y in 0..image.height as usize {
+        for x in 0..width {
+            for y in 0..height {
                 let src_page = y / 8;
                 let src_bit = 7 - (y % 8);
                 let src_index = x * img_pages + src_page;
 
-                let pixel_on = (image.bytes[src_index] >> src_bit) & 1;
+                let pixel_on = (image.as_bytes()[src_index] >> src_bit) & 1;
+                if let Some(alpha_bytes) = image.as_bytes_alpha() {
+                    if alpha_bytes[src_index] >> src_bit & 1 == 0 {
+                        continue;
+                    }
+                }
 
                 let dest_x = offset_x as usize + x;
                 let dest_y = offset_y as usize + y;
@@ -889,30 +935,40 @@ impl Framebuffer {
                 }
             }
         }
+
+        self.bounds.push(Rect {
+            x: offset_x,
+            y: offset_y,
+            width: width as i16,
+            height: height as i16,
+        });
     }
 
-    pub fn draw_image_inverted<T, U, const M: usize>(
-        &mut self,
-        offset_x: T,
-        offset_y: U,
-        image: &QmkImage<M>,
-    ) where
+    pub fn draw_image_inverted<T, U, I>(&mut self, offset_x: T, offset_y: U, image: &I)
+    where
         T: Num + ToPrimitive,
         U: Num + ToPrimitive,
+        I: QmkImage,
     {
         let offset_x = offset_x.to_i16().unwrap_or(0);
         let offset_y = offset_y.to_i16().unwrap_or(0);
 
-        let img_pages = (image.height as usize).div_ceil(8);
+        let width = image.width() as usize;
+        let height = image.height() as usize;
+
+        let img_pages = height.div_ceil(8);
         let display_width = Screen::OLED_DISPLAY_WIDTH;
 
-        for x in 0..image.width as usize {
-            for y in 0..image.height as usize {
+        for x in 0..width {
+            for y in 0..height {
                 let src_page = y / 8;
                 let src_bit = 7 - (y % 8);
                 let src_index = x * img_pages + src_page;
 
-                let pixel_on = (image.bytes[src_index] >> src_bit) & 1;
+                let mut pixel_on = (image.as_bytes()[src_index] >> src_bit) & 1;
+                if let Some(alpha_bytes) = image.as_bytes_alpha() {
+                    pixel_on &= (alpha_bytes[src_index] >> src_bit) & 1;
+                }
 
                 let dest_x = offset_x as usize + x;
                 let dest_y = offset_y as usize + y;
